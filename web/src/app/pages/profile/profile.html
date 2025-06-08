@@ -1,0 +1,16 @@
+<div class="container">
+  <mat-card class="profile-card">
+    <mat-card-header>
+      <mat-card-title>User Profile</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <img *ngIf="user.profileImageUrl" [src]="user.profileImageUrl" alt="Profile Image" class="profile-image">
+      <p><strong>Username:</strong> {{ user.userName }}</p>
+      <p><strong>Email:</strong> {{ user.email }}</p>
+      <p><strong>MFA Enabled:</strong> {{ user.isMfaEnabled ? 'Yes' : 'No' }}</p>
+      <input type="file" (change)="onFileSelected($event)" accept="image/*">
+      <button mat-raised-button color="primary" (click)="uploadProfileImage()">Upload Image</button>
+      <a mat-button color="accent" routerLink="/mfa-setup">Setup MFA</a>
+    </mat-card-content>
+  </mat-card>
+</div>

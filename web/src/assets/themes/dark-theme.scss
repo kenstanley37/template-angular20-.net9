@@ -1,0 +1,19 @@
+:root {
+  --background-color: #121212;
+  --text-color: #e0e0e0;
+  --toolbar-background: #1a237e;
+  --toolbar-text: #ffffff;
+  --border-color: #444444;
+  --card-background: #1e1e1e;
+  --card-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-theme {
+  background-color: var(--background-color);
+  color: var(--text-color);
+}
+
+body.dark-theme mat-card {
+  background-color: var(--card-background);
+  box-shadow: var(--card-shadow);
+}

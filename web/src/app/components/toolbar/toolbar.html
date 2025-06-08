@@ -1,26 +1,21 @@
-<mat-toolbar>
-  <button matIconButton class="example-icon" aria-label="Example icon-button with menu icon">
+<mat-toolbar color="primary">
+  <button mat-icon-button (click)="onToggleSidenav()" *ngIf="isLoggedIn">
     <mat-icon>menu</mat-icon>
   </button>
-  <span>Template</span>
-  <span class="example-spacer"></span>
-    <button matButton [matMenuTriggerFor]="menu">Menu</button>
-        <mat-menu #menu="matMenu">
-            <button mat-menu-item>Item 1</button>
-            <button mat-menu-item>Item 2</button>
-        </mat-menu>
-  <span class="example-spacer"></span>
-  <button matIconButton class="example-icon favorite-icon" aria-label="Example icon-button with heart icon">
-    <mat-icon>favorite</mat-icon>
+  <span>Social Login App</span>
+  <span class="spacer"></span>
+  <button mat-icon-button *ngIf="isLoggedIn" [matMenuTriggerFor]="themeMenu" aria-label="Select theme">
+    <mat-icon>{{ selectedTheme === 'dark-theme' ? 'dark_mode' : 'light_mode' }}</mat-icon>
   </button>
-  <button matIconButton class="example-icon" aria-label="Example icon-button with share icon">
-    <mat-icon>share</mat-icon>
-  </button>
-  <button matIconButton class="example-icon" aria-label="Example icon-button with share icon">
-    <mat-icon>login</mat-icon>
-  </button>
-  <button matIconButton class="example-icon" aria-label="Example icon-button with share icon">
-    <mat-icon>logout</mat-icon>
-  </button>
-
+  <mat-menu #themeMenu="matMenu">
+    <ng-container *ngFor="let theme of themes">
+      <button mat-menu-item (click)="changeTheme(theme.value)">
+        <mat-radio-button [checked]="selectedTheme === theme.value" color="primary">
+          {{ theme.label }}
+        </mat-radio-button>
+      </button>
+    </ng-container>
+  </mat-menu>
+  <button mat-button *ngIf="!isLoggedIn" (click)="navigateToLogin()">Login</button>
+  <button mat-button *ngIf="isLoggedIn" (click)="signOut()">Sign Out</button>
 </mat-toolbar>

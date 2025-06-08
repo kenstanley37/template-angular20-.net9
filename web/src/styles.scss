@@ -1,4 +1,33 @@
-/* You can add global styles to this file, and also import other style files */
+$background-color: #ffffff;
+$text-color: #333333;
+$toolbar-background: #3f51b5;
+$toolbar-text: #ffffff;
+$border-color: #cccccc;
+$card-background: #ffffff;
+$card-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+$dark-background-color: #121212;
+$dark-text-color: #e0e0e0;
+$dark-toolbar-background: #1a237e;
+$dark-border-color: #444444;
+$dark-card-background: #1e1e1e;
+$dark-card-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+
+@import './assets/themes/light-theme';
+@import './assets/themes/dark-theme';
+
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+}
+
+.error-snackbar {
+  background-color: #f44336;
+  color: white;
+}
+
+.success-snackbar {
+  background-color: #4caf50;
+  color: white;
+}

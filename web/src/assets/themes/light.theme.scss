@@ -1,0 +1,9 @@
+body.light-theme {
+  background-color: $background-color;
+  color: $text-color;
+
+  mat-card {
+    background-color: $card-background;
+    box-shadow: $card-shadow;
+  }
+}
