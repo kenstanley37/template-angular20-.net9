@@ -1,5 +1,8 @@
+@use '@angular/material' as mat;
+
 mat-dialog-content {
   text-align: center;
+  color: mat.get-color-from-palette(mat.$grey-palette, 900);
 }
 
 mat-dialog-actions {

@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Inject, OnInit, Output } from '@angular/core';
 import { Router } from '@angular/router';
-import { Auth } from '../../_services/auth';
-import { Theme } from '../../_services/theme';
+import { AuthService } from '../../_services/auth-service';
+import { ThemeService } from '../../_services/theme-service';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -33,8 +33,8 @@ export class Toolbar implements OnInit {
 
 
   constructor(
-    @Inject(Auth) private authService: Auth,
-    @Inject(Theme) private themeService: Theme,
+    @Inject(AuthService) private authService: AuthService,
+    @Inject(ThemeService) private themeService: ThemeService,
     private router: Router
   ) {}
 

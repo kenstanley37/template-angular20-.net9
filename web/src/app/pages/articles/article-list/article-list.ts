@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { Auth } from '../../../_services/auth';
+import { AuthService } from '../../../_services/auth-service';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { CommonModule } from '@angular/common';
@@ -21,7 +21,7 @@ import { SafeHtmlPipe } from '../../../_pipes/safe-html-pipe';
   styleUrl: './article-list.scss'
 })
 export class ArticleList implements OnInit {
-private apiBaseUrl = import.meta.env.NG_APP_API_BASE_URL;
+private apiBaseUrl = import.meta.env['NG_APP_API_BASE_URL'];
   allArticles: any[] = [];
   userArticles: any[] = [];
   isLoggedIn: boolean = false;
@@ -30,7 +30,7 @@ private apiBaseUrl = import.meta.env.NG_APP_API_BASE_URL;
   constructor(
     private http: HttpClient,
     private snackBar: MatSnackBar,
-    private authService: Auth
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {

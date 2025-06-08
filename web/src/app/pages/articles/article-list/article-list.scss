@@ -1,0 +1,26 @@
+@use '@angular/material' as mat;
+
+.container {
+  padding: 20px;
+  height: calc(100vh - 64px - 60px);
+  overflow-y: auto;
+  background-color: mat.get-background-color(mat.$grey-50);
+
+  .article-list-card {
+    margin-bottom: 20px;
+
+    .article-card {
+      margin: 10px 0;
+      padding: 10px;
+
+      mat-card-title {
+        font-size: 1.5em;
+        color: mat.get-color-from-palette(mat.$grey-palette, 900);
+      }
+
+      mat-card-subtitle {
+        color: mat.get-color-from-palette(mat.$grey-palette, 700);
+      }
+    }
+  }
+}

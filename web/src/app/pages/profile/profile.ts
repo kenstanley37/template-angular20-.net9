@@ -1,7 +1,7 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { Auth } from '../../_services/auth';
+import { AuthService } from '../../_services/auth-service';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { CommonModule } from '@angular/common';
@@ -26,7 +26,7 @@ export class Profile implements OnInit {
   constructor(
     private http: HttpClient,
     private snackBar: MatSnackBar,
-    @Inject(Auth) private authService: Auth
+    @Inject(AuthService) private authService: AuthService
   ) { }
 
   ngOnInit(): void {

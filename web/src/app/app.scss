@@ -1,18 +1,21 @@
+@use '@angular/material' as mat;
+
 .sidenav-container {
   height: calc(100vh - 64px);
-}
 
-.content {
-  padding: 20px;
-  min-height: calc(100vh - 64px - 60px);
-}
+  .content {
+    padding: 20px;
+    min-height: calc(100vh - 64px - 60px);
+    background-color: mat.get-color-from-palette(mat.$grey-palette, 50);
+  }
 
-.footer {
-  background-color: var(--toolbar-background);
-  color: var(--toolbar-text);
-  text-align: center;
-  padding: 20px;
-  position: fixed;
-  bottom: 0;
-  width: 100%;
+  .footer {
+    background-color: mat.get-color-from-palette(mat.$indigo-palette, 500);
+    color: white;
+    text-align: center;
+    padding: 20px;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+  }
 }

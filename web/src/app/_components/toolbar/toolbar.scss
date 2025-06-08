@@ -1,0 +1,10 @@
+@use '@angular/material' as mat;
+
+mat-toolbar {
+  background-color: mat.get-color-from-palette(mat.$indigo-palette, 500);
+  color: white;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}

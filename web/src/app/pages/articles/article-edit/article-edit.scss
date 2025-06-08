@@ -1,0 +1,32 @@
+@use '@angular/material' as mat;
+
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: calc(100vh - 64px - 60px);
+  background-color: mat.get-color-from-palette(mat.$grey-palette, 50);
+
+  .article-card {
+    width: 600px;
+
+    .full-width {
+      width: 100%;
+      margin-bottom: 15px;
+    }
+
+    .quill-container {
+      margin-bottom: 15px;
+      border: 1px solid mat.get-color-from-palette(mat.$grey-palette, 300);
+      border-radius: 4px;
+
+      .ql-container {
+        height: 200px;
+      }
+    }
+
+    button {
+      margin-top: 10px;
+    }
+  }
+}

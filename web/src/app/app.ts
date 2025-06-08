@@ -1,8 +1,8 @@
 import { Component, Inject, OnInit, ViewChild } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { Toolbar } from "./components/toolbar/toolbar";
-import { Footer } from "./components/footer/footer";
-import { Auth } from './_services/auth';
+import { Toolbar } from "./_components/toolbar/toolbar";
+import { Footer } from "./_components/footer/footer";
+import { AuthService } from './_services/auth-service';
 import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
 import { CommonModule } from '@angular/common';
@@ -27,7 +27,7 @@ export class App implements OnInit {
   @ViewChild('sidenav') sidenav!: MatSidenav;
 
   constructor(
-    @Inject(Auth) private authService: Auth, 
+    @Inject(AuthService) private authService: AuthService, 
     private router: Router
   ) {}
 

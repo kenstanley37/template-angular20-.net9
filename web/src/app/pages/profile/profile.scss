@@ -1,0 +1,24 @@
+@use '@angular/material' as mat;
+
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: calc(100vh - 64px - 60px);
+  background-color: mat.get-color-from-palette(mat.$grey-palette, 50);
+
+  .profile-card {
+    width: 400px;
+
+    .profile-image {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      margin-bottom: 15px;
+    }
+
+    button, a {
+      margin: 10px 5px;
+    }
+  }
+}

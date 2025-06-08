@@ -10,7 +10,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 @Injectable({
   providedIn: 'root'
 })
-export class Auth {
+export class AuthService {
   private apiBaseUrl = import.meta.env.NG_APP_API_BASE_URL;
   private isLoggedInSubject = new BehaviorSubject<boolean>(false);
   private isAdminSubject = new BehaviorSubject<boolean>(false);

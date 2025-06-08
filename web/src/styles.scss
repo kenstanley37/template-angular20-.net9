@@ -1,20 +1,39 @@
-$background-color: #ffffff;
-$text-color: #333333;
-$toolbar-background: #3f51b5;
-$toolbar-text: #ffffff;
-$border-color: #cccccc;
-$card-background: #ffffff;
-$card-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+@use '@angular/material' as mat;
 
-$dark-background-color: #121212;
-$dark-text-color: #e0e0e0;
-$dark-toolbar-background: #1a237e;
-$dark-border-color: #444444;
-$dark-card-background: #1e1e1e;
-$dark-card-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+// Define custom palettes
+$my-primary: mat.define-palette(mat.$indigo-palette, 500);
+$my-accent: mat.define-palette(mat.$pink-palette, A200, A100, A400);
+$my-warn: mat.define-palette(mat.$red-palette);
 
-@import './assets/themes/light-theme';
-@import './assets/themes/dark-theme';
+// Define light theme
+$light-theme: mat.define-light-theme((
+  color: (
+    primary: $my-primary,
+    accent: $my-accent,
+    warn: $my-warn,
+  ),
+  typography: mat.define-typography-config(),
+  density: 0
+));
+
+// Define dark theme
+$dark-theme: mat.define-dark-theme((
+  color: (
+    primary: $my-primary,
+    accent: $my-accent,
+    warn: $my-warn,
+  ),
+  typography: mat.define-typography-config(),
+  density: 0
+));
+
+// Apply light theme by default
+@include mat.all-component-themes($light-theme);
+
+// Dark theme styles
+.dark-theme {
+  @include mat.all-component-themes($dark-theme);
+}
 
 html, body {
   height: 100%;
@@ -23,11 +42,27 @@ html, body {
 }
 
 .error-snackbar {
-  background-color: #f44336;
+  @include mat.snackbar-theme($light-theme);
+  background-color: mat.get-color-from-palette($my-warn, 500);
   color: white;
 }
 
 .success-snackbar {
-  background-color: #4caf50;
+  @include mat.snackbar-theme($light-theme);
+  background-color: mat.get-color-from-palette(mat.$green-palette, 500);
   color: white;
+}
+
+.dark-theme {
+  .error-snackbar {
+    @include mat.snackbar-theme($dark-theme);
+    background-color: mat.get-color-from-palette($my-warn, 500);
+    color: white;
+  }
+
+  .success-snackbar {
+    @include mat.snackbar-theme($dark-theme);
+    background-color: mat.get-color-from-palette(mat.$green-palette, 500);
+    color: white;
+  }
 }

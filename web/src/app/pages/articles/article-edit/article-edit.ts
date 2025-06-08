@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { Auth } from '../../../_services/auth';
+import { AuthService } from '../../../_services/auth-service';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -25,8 +25,8 @@ import { CommonModule } from '@angular/common';
   templateUrl: './article-edit.html',
   styleUrl: './article-edit.scss'
 })
-export class ArticleEdit {
-private apiBaseUrl = import.meta.env.NG_APP_API_BASE_URL;
+export class ArticleEdit implements OnInit {
+private apiBaseUrl = import.meta.env['NG_APP_API_BASE_URL'];
   articleId: number;
   currentUserId: number | null = null;
   title: string = '';
@@ -46,7 +46,7 @@ private apiBaseUrl = import.meta.env.NG_APP_API_BASE_URL;
     private route: ActivatedRoute,
     private router: Router,
     private http: HttpClient,
-    private authService: Auth,
+    private authService: AuthService,
     private snackBar: MatSnackBar
   ) {
     this.articleId = +this.route.snapshot.paramMap.get('id')!;

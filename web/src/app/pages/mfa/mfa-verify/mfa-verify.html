@@ -1,1 +1,16 @@
-<p>mfa-verify works!</p>
+<div class="container">
+  <mat-card class="mfa-card">
+    <mat-card-header>
+      <mat-card-title>Verify Multi-Factor Authentication</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <mat-form-field class="full-width">
+        <mat-label>TOTP Code</mat-label>
+        <input matInput [(ngModel)]="totpCode" required>
+      </mat-form-field>
+    </mat-card-content>
+    <mat-card-actions>
+      <button mat-raised-button color="primary" (click)="verifyMfa()">Verify</button>
+    </mat-card-actions>
+  </mat-card>
+</div>
