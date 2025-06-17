@@ -1,0 +1,16 @@
+<div class="container">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>Site Offline</mat-card-title>
+      <mat-card-subtitle>We're having trouble connecting to the server</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <p>
+        The server appears to be offline or unreachable. Please check your connection or try again later.
+      </p>
+    </mat-card-content>
+    <mat-card-actions>
+      <button mat-raised-button color="primary" [routerLink]="['/login']">Retry</button>
+    </mat-card-actions>
+  </mat-card>
+</div>

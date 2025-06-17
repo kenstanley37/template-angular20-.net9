@@ -1,0 +1,27 @@
+<mat-card>
+  <mat-card-title>Profile</mat-card-title>
+  <mat-card-subtitle>Manage your profile</mat-card-subtitle>
+
+  @if (profile) {
+    <div class="profile-details">
+      <img [src]="profile!.profilePicture || 'default-avatar.png'" class="profile-pic" alt="Profile Picture" />
+      <p><strong>Name:</strong> {{ profile!.name }}</p>
+      <p><strong>Email:</strong> {{ profile!.email }}</p>
+    </div>
+
+    <div class="upload-section">
+      <mat-label>Upload Profile Picture</mat-label>
+      <input type="file" (change)="onFileSelected($event)" accept="image/jpeg,image/png" />
+      <div class="actions">
+        <button mat-button (click)="uploadProfilePicture()" [disabled]="!selectedFile">Upload Picture</button>
+        <button mat-button (click)="clearProfilePicture()">Clear Picture</button>
+      </div>
+    </div>
+
+    @if (errorMessage().length > 0) {
+      <div class="error-message">{{ errorMessage() }}</div>
+    }
+  } @else {
+    <p>Loading profile...</p>
+  }
+</mat-card>

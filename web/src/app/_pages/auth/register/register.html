@@ -1,0 +1,55 @@
+<div class="container">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>Create Account</mat-card-title>
+      <mat-card-subtitle>Join us today</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+        <mat-form-field appearance="fill">
+          <mat-label>Username</mat-label>
+          <input matInput formControlName="username" placeholder="Enter your username">
+          @if (registerForm.get('username')?.hasError('required')) {
+            <mat-error>Username is required</mat-error>
+          }
+          @if (registerForm.get('username')?.hasError('minlength')) {
+            <mat-error>Username must be at least 3 characters</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="fill">
+          <mat-label>Email</mat-label>
+          <input matInput formControlName="email" type="email" placeholder="Enter your email">
+          @if (registerForm.get('email')?.hasError('required')) {
+            <mat-error>Email is required</mat-error>
+          }
+          @if (registerForm.get('email')?.hasError('email')) {
+            <mat-error>Invalid email format</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="fill">
+          <mat-label>Password</mat-label>
+          <input matInput formControlName="password" type="password" placeholder="Enter your password">
+          @if (registerForm.get('password')?.hasError('required')) {
+            <mat-error>Password is required</mat-error>
+          }
+          @if (registerForm.get('password')?.hasError('minlength')) {
+            <mat-error>Password must be at least 6 characters</mat-error>
+          }
+        </mat-form-field>
+
+        @if (errorMessage().length > 0) {
+          <mat-error class="error-message">{{ errorMessage() }}</mat-error>
+        }
+        @if (successMessage().length > 0) {
+          <div class="success-message">{{ successMessage() }}</div>
+        }
+        <mat-card-actions>
+          <button mat-raised-button color="primary" type="submit" [disabled]="registerForm.invalid">Register</button>
+          <a mat-button href="/login">Already have an account?</a>
+        </mat-card-actions>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

@@ -1,0 +1,63 @@
+<div class="login-container">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>Login</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+        <mat-form-field appearance="fill">
+          <mat-label>Email</mat-label>
+          <input matInput formControlName="email" type="email" />
+          @if (loginForm.get('email')?.hasError('required')) {
+          <mat-error>Email is required</mat-error>
+          } @if (loginForm.get('email')?.hasError('email')) {
+          <mat-error>Invalid email format</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="fill">
+          <mat-label>Password</mat-label>
+          <input matInput formControlName="password" type="password" />
+          @if (loginForm.get('password')?.hasError('required')) {
+          <mat-error>Password is required</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-checkbox formControlName="stayLoggedIn"
+          >Stay logged in</mat-checkbox
+        >
+
+        <div class="actions">
+          <button
+            mat-raised-button
+            color="primary"
+            type="submit"
+            [disabled]="loginForm.invalid"
+          >
+            Login
+          </button>
+          <button mat-button routerLink="/register">Register</button>
+        </div>
+      </form>
+
+      <div class="social-login">
+        <!-- Google Sign-In Button -->
+        <!-- Ensure you have the Google Sign-In library loaded in your index.html -->
+        <!--
+          <asl-google-signin-button
+            type="standard"
+            size="large"
+            shape="rectangular"
+          ></asl-google-signin-button>
+        -->
+
+        <div id="google-button"></div>
+        <button (click)="triggerSignIn()">Google Login</button>
+      </div>
+
+      @if (errorMessage) {
+      <mat-error class="error-message">{{ errorMessage }}</mat-error>
+      }
+    </mat-card-content>
+  </mat-card>
+</div>
