@@ -16,8 +16,8 @@ Environment files
 .env.dev 
 .env.prod 
 .env.*
-src/environments/environment*.ts
-!src/environments/environment.example.ts
+web/src/environments/environment*.ts
+!web/src/environments/environment.example.ts
 
 
 # IDEs and editors
