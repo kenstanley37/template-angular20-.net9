@@ -5,17 +5,23 @@ import { catchError, switchMap, throwError } from 'rxjs';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
+
   return next(req).pipe(
     catchError(error => {
-      if (error.status === 401 ) {
+      // Prevent infinite loop
+      if (error.status === 401 && !req.url.includes('/auth/refresh')) {
         return authService.refreshToken().pipe(
-          switchMap(() => next(req.clone())), // Retry original request
+          switchMap(() => {
+            const clonedRequest = req.clone({ withCredentials: true });
+            return next(clonedRequest);
+          }),
           catchError(refreshError => {
             authService.logout().subscribe();
             return throwError(() => refreshError);
           })
         );
       }
+
       return throwError(() => error);
     })
   );

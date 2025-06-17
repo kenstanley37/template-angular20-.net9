@@ -42,21 +42,27 @@ namespace api
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
                         ValidateIssuer = true,
-                        ValidateAudience = true,
-                        ValidateLifetime = true,
-                        ValidateIssuerSigningKey = true,
                         ValidIssuer = jwtIssuer,
+
+                        ValidateAudience = true,
                         ValidAudience = jwtAudience,
+
+                        ValidateLifetime = true,
+                        ClockSkew = TimeSpan.FromMinutes(2), // allow slight clock drift
+
+                        ValidateIssuerSigningKey = true,
                         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
                     };
 
                     options.Events = new JwtBearerEvents
                     {
-                        OnMessageReceived = ctx =>
+                        OnMessageReceived = context =>
                         {
-                            ctx.Request.Cookies.TryGetValue("auth_token", out var accessToken);
-                            if (!string.IsNullOrEmpty(accessToken))
-                                ctx.Token = accessToken;
+                            // Read JWT from HttpOnly cookie
+                            if (context.Request.Cookies.TryGetValue("auth_token", out var token))
+                            {
+                                context.Token = token;
+                            }
                             return Task.CompletedTask;
                         }
                     };
