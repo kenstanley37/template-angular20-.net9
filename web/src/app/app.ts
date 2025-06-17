@@ -70,6 +70,7 @@ export class App {
             }
           });
         } else {
+          this.isAuthenticated.set(false);
           this.profile.set(null);
         }
       }

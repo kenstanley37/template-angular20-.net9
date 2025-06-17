@@ -65,7 +65,7 @@ export class AuthService {
     return this.http.post(`${environment.apiUrl}/auth/refresh`, {}, { withCredentials: true }).pipe(
       tap(response => {
         this.isAuthenticated.set(true);
-        this.getProfile().subscribe(); // Side effect: re-fetch profile
+        this.getProfile(); // Side effect: re-fetch profile
         console.log('Token refreshed successfully:', response);
       }),
       catchError(error => {
