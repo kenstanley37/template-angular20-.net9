@@ -7,6 +7,22 @@ mat-toolbar {
   align-items: center;
   background-color: var(--primary);
   color: var(--on-primary);
+  position: fixed;
+  height: 64px;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  transition: box-shadow 0.3s ease;
+  background: #1976d2; // or your Material color
+  color: white;
+
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  z-index: 2;
+
+  &.shadow {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  }
 }
 
 ::ng-deep .user-menu {

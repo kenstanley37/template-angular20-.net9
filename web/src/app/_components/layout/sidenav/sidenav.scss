@@ -1,0 +1,15 @@
+.label {
+  display: inline-block;
+  margin-left: 12px;
+  white-space: nowrap;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  opacity: 1;
+  transform: scaleX(1);
+  pointer-events: auto;
+}
+
+.label.hidden {
+  opacity: 0;
+  transform: scaleX(0.9);
+  pointer-events: none;
+}

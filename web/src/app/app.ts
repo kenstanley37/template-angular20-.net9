@@ -1,6 +1,6 @@
-import { Component, ViewChild, signal, inject, effect } from '@angular/core';
+import { Component, ViewChild, signal, inject, effect, computed } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { Toolbar } from './_components/toolbar/toolbar';
+import { Toolbar } from './_components/layout/toolbar/toolbar';
 import { AuthService } from './_services/auth-service';
 import { catchError, switchMap, throwError } from 'rxjs';
 import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
@@ -13,6 +13,9 @@ import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { filter, tap } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
 import { ProfileDto } from './_models/user-model';
+import { Sidenav } from "./_components/layout/sidenav/sidenav";
+import { Footer } from "./_components/layout/footer/footer";
+import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 
 
 @Component({
@@ -26,7 +29,9 @@ import { ProfileDto } from './_models/user-model';
     MatListModule,
     MatDividerModule,
     MatIconModule,
-    Toolbar
+    Toolbar,
+    Sidenav,
+    Footer
   ],
   templateUrl: './app.html',
   styleUrl: './app.scss'
@@ -34,14 +39,28 @@ import { ProfileDto } from './_models/user-model';
 export class App {
   protected title = 'web';
   @ViewChild(MatSidenav) sidenav!: MatSidenav;
-  isSidenavOpen = signal(false);
+  isSidenavOpen = signal(true);
+  isHovering = false;
+  isCollapsed = computed(() => !this.isSidenavOpen());
   isAuthenticated = signal(false);
   profile = signal<ProfileDto | null>(null);
+  isMobile = signal(false);
+
+  hideFooter = signal(false);
+  lastScrollTop = 0;
 
   private router = inject(Router);
 
-  constructor(private authService: AuthService) {
+  constructor(private authService: AuthService, breakpointObserver: BreakpointObserver) {
     // Initialization logic can go here if needed
+
+    effect(() => {
+      breakpointObserver.observe([Breakpoints.XSmall, Breakpoints.Small])
+        .subscribe(result => {
+          this.isMobile.set(result.matches);
+          this.isSidenavOpen.set(!result.matches); // Close on mobile
+        });
+    });
 
     // Auto-close sidenav on route change
     this.router.events.pipe(
@@ -53,6 +72,11 @@ export class App {
     // Check authentication status on app initialization
     this.checkAuthStatus();
   }
+
+  onSidenavHover(state: boolean) {
+  this.isHovering = state;
+}
+
 
   checkAuthStatus() {
     this.authService.checkAuthStatus().subscribe({
@@ -75,6 +99,12 @@ export class App {
         }
       }
     });
+  }
+
+  onScroll(event: Event) {
+    const scrollTop = (event.target as HTMLElement).scrollTop;
+    this.hideFooter.set(scrollTop > this.lastScrollTop);
+    this.lastScrollTop = scrollTop;
   }
 
   toggleSidenav() {

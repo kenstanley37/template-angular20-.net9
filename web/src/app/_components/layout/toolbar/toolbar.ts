@@ -1,13 +1,13 @@
-import { Component, inject } from '@angular/core';
+import { Component, EventEmitter, inject, Input, Output, signal } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { CommonModule } from '@angular/common';
-import { AuthService } from '../../_services/auth-service';
-import { Profile } from '../../_pages/user/profile/profile';
-import { ProfileDto } from '../../_models/user-model';
+import { AuthService } from '../../../_services/auth-service';
+import { Profile } from '../../../_pages/user/profile/profile';
+import { ProfileDto } from '../../../_models/user-model';
 
 @Component({
   selector: 'app-toolbar',
@@ -24,9 +24,15 @@ import { ProfileDto } from '../../_models/user-model';
   styleUrl: './toolbar.scss'
 })
 export class Toolbar {
+  @Input() pinned = false;
+  @Output() toggle = new EventEmitter<boolean>();
+
   private authService = inject(AuthService);
   private router = inject(Router);
   profile: ProfileDto | null = null;
+  isSidenavOpen = signal<boolean>(false);
+  hasShadow = signal(false);
+  
 
   // Access signal values directly
   get isAuthenticated() {
@@ -35,6 +41,10 @@ export class Toolbar {
 
   get getProfile() {
     return this.authService.userProfile();
+  }
+
+  get getIsSidenavOpen() {
+    return this.isSidenavOpen();
   }
 
   constructor() {
@@ -49,6 +59,19 @@ export class Toolbar {
         error: (err) => console.error('Error fetching profile:', err)
       });
     }
+  }
+
+  onScroll(event: Event) {
+    const scrollTop = (event.target as HTMLElement).scrollTop;
+    this.hasShadow.set(scrollTop > 10);
+  }
+
+  toggleSidenav() {
+    // Toggle the sidenav state
+    console.log('Toggling sidenav. Current state:', this.isSidenavOpen());
+    this.isSidenavOpen.set(!this.isSidenavOpen());
+    this.toggle.emit(this.isSidenavOpen());
+    console.log('New sidenav state:', this.isSidenavOpen());
   }
 
   logout() {

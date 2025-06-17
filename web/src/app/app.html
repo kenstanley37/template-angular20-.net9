@@ -1,103 +1,33 @@
-<mat-sidenav-container class="layout-container">
-  <mat-sidenav
-    #sidenav
-    [opened]="isSidenavOpen()"
-    mode="over"
-    (closedStart)="isSidenavOpen.set(false)"
-    class="sidenav"
+<app-toolbar
+  [pinned]="isSidenavOpen()"
+  (toggle)="isSidenavOpen.set(!isSidenavOpen())"
+/>
+
+<!-- Content wrapper pushes everything below the toolbar -->
+<div class="wrapper">
+  <mat-sidenav-container
+    class="sidenav-container"
+    [class.with-sidenav]="isSidenavOpen() || isHovering"
   >
-    <div class="sidenav-content">
-      <div class="userProfile">
-        <img
-          [src]="profile()?.profilePicture || 'assets/default-profile.webp'"
-          alt="Profile Picture"
-          class="profile-pic"
-        />
-        <div class="user-name">{{ profile()?.name || 'Guest' }}</div>
-      </div>
+    <mat-sidenav
+      mode="side"
+      [opened]="true"
+      class="sidenav"
+      [class.collapsed]="!isSidenavOpen()"
+    >
+      <app-sidenav [collapsed]="!isSidenavOpen()" />
+    </mat-sidenav>
 
-      <!-- Navigation Section -->
-      <mat-nav-list>
-        <h3 mat-subheader>Navigation</h3>
-        <a
-          mat-list-item
-          routerLink="/"
-          routerLinkActive="active-link"
-          [routerLinkActiveOptions]="{ exact: true }"
-          (click)="sidenav.close()"
-        >
-          <mat-icon matListIcon>home</mat-icon>
-          <span>Home</span>
-        </a>
+    <mat-sidenav-content
+      class="main-content"
+      [class.with-sidenav]="isSidenavOpen()"
+      [class.collapsed]="!isSidenavOpen()"
+    >
+      <main (scroll)="onScroll($event)">
+        <router-outlet />
+      </main>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
 
-        <a
-          *ngIf="isAuthenticated()"
-          mat-list-item
-          routerLink="/profile"
-          routerLinkActive="active-link"
-          (click)="sidenav.close()"
-        >
-          <mat-icon matListIcon>account_circle</mat-icon>
-          <span>Profile</span>
-        </a>
-      </mat-nav-list>
-
-      <!-- Auth Section -->
-      <mat-divider></mat-divider>
-      <mat-nav-list>
-        <h3 mat-subheader>Account</h3>
-
-        <a
-          *ngIf="!isAuthenticated()"
-          mat-list-item
-          routerLink="/login"
-          routerLinkActive="active-link"
-          (click)="sidenav.close()"
-        >
-          <mat-icon matListIcon>login</mat-icon>
-          <span>Login</span>
-        </a>
-
-        <a
-          *ngIf="!isAuthenticated()"
-          mat-list-item
-          routerLink="/register"
-          routerLinkActive="active-link"
-          (click)="sidenav.close()"
-        >
-          <mat-icon matListIcon>person_add</mat-icon>
-          <span>Register</span>
-        </a>
-
-        <a
-          *ngIf="isAuthenticated()"
-          mat-list-item
-          (click)="logout(); sidenav.close()"
-        >
-          <mat-icon matListIcon>logout</mat-icon>
-          <span>Logout</span>
-        </a>
-      </mat-nav-list>
-    </div>
-  </mat-sidenav>
-
-  <mat-sidenav-content>
-    <!-- Fixed Toolbar -->
-    <mat-toolbar color="primary" class="main-toolbar">
-      <button mat-icon-button (click)="toggleSidenav()">
-        <mat-icon>menu</mat-icon>
-      </button>
-      <span class="title">Auth App</span>
-      <span class="spacer"></span>
-      <app-toolbar />
-    </mat-toolbar>
-
-    <!-- Scrollable Content -->
-    <main class="main-content">
-      <router-outlet></router-outlet>
-    </main>
-
-    <!-- Fixed Footer -->
-    <footer class="footer">© 2025 Your Company — All rights reserved.</footer>
-  </mat-sidenav-content>
-</mat-sidenav-container>
+  <app-footer [hidden]="hideFooter()" />
+</div>

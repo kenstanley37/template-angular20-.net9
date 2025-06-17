@@ -1,0 +1,22 @@
+<mat-nav-list>
+  <a
+    mat-list-item
+    routerLink="/"
+    routerLinkActive="active"
+    matTooltip="Home"
+    [matTooltipDisabled]="!collapsed"
+  >
+    <mat-icon>home</mat-icon>
+    <span class="label" [class.hidden]="collapsed">Home</span>
+  </a>
+
+  <a mat-list-item routerLink="/about" routerLinkActive="active" matTooltip="About" [matTooltipDisabled]="!collapsed">
+    <mat-icon>info</mat-icon>
+    <span class="label" [class.hidden]="collapsed">About</span>
+  </a>
+
+  <a mat-list-item routerLink="/settings" routerLinkActive="active" matTooltip="Settings" [matTooltipDisabled]="!collapsed">
+    <mat-icon>settings</mat-icon>
+    <span class="label" [class.hidden]="collapsed">Settings</span>
+  </a>
+</mat-nav-list>
