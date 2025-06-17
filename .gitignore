@@ -19,6 +19,7 @@ web/.angular/
 web/.output/
 web/coverage/
 web/.eslintcache
+web/*.zip
 
 # Angular environment files (ignore real ones, keep example)
 web/src/environments/environment*.ts
@@ -35,83 +36,86 @@ web/.vscode/*
 web/.history/
 
 # =============================
-# .NET 9 Backend (api/)
+# .NET 9 Backend (api/api/)
 # =============================
 
 # Build results
-api/bin/
-api/obj/
-api/Debug/
-api/Release/
-api/.vs/
-api/.vscode/
-api/.idea/
-api/.history/
+api/api/bin/
+api/api/obj/
+api/api/Debug/
+api/api/Release/
+api/api/.vs/
+api/api/.vscode/
+api/api/.idea/
+api/api/.history/
+api/api/*.zip
 
 # Rider / ReSharper
-api/*.sln.iml
-api/_ReSharper*/
-api/*.DotSettings.user
+api/api/*.sln.iml
+api/api/_ReSharper*/
+api/api/*.DotSettings.user
 
 # User-specific files
-api/*.user
-api/*.suo
-api/*.userosscache
-api/*.sln.docstates
+api/api/*.user
+api/api/*.suo
+api/api/*.userosscache
+api/api/*.sln.docstates
 
 # Logs & temp
-api/*.log
-api/*.tmp
-api/*.tlog
-api/*.bak
+api/api/*.log
+api/api/*.tmp
+api/api/*.tlog
+api/api/*.bak
 
 # Build cache
-api/*.dbmdl
-api/*.pdb
-api/*.cache
-api/*.db
-api/Logs/
+api/api/*.dbmdl
+api/api/*.pdb
+api/api/*.cache
+api/api/*.db
+api/api/Logs/
 
 # .NET generated files
-api/Generated\ Files/
-api/Migrations/
+api/api/Generated\ Files/
+api/api/Migrations/
 
 # ASP.NET config/secrets
-api/Properties/launchSettings.json
-api/appsettings.Development.json
-api/appsettings.Production.json
-api/appsettings.Local.json
-api/secrets.json
-!api/appsettings.example.json
+api/api/Properties/launchSettings.json
+api/api/appsettings.Development.json
+api/api/appsettings.Production.json
+api/api/appsettings.Local.json
+api/api/appsettings.json
+api/api/secrets.json
+!api/api/appsettings.example.json
 
 # Publish profiles
-api/*.publishsettings
-api/*.pubxml
-api/PublishScripts/
+api/api/*.publishsettings
+api/api/*.pubxml
+api/api/PublishScripts/
 
 # NuGet
-api/packages/
-api/*.nupkg
-api/*.snupkg
-api/*.nuget.props
-api/*.nuget.targets
+api/api/packages/
+api/api/*.nupkg
+api/api/*.snupkg
+api/api/*.nuget.props
+api/api/*.nuget.targets
 
 # Azure & cloud
-api/.azure/
-api/*.azurePubxml
+api/api/.azure/
+api/api/*.azurePubxml
 
 # Others
-api/obj/
-api/.temp/
-api/.cache/
-api/.vsconfig
-api/.DS_Store
-api/Thumbs.db
+api/api/.temp/
+api/api/.cache/
+api/api/.vsconfig
+api/api/.DS_Store
+api/api/Thumbs.db
 
 # Optional SQL files
-api/*.mdf
-api/*.ldf
-api/*.ndf
+api/api/*.mdf
+api/api/*.ldf
+api/api/*.ndf
+
+**/.vs/
 
 # =============================
 # System & Editor Files (global)
