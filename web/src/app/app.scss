@@ -24,11 +24,11 @@ mat-sidenav-content.main-content {
   top: 64px;
 
   &.with-sidenav {
-    margin-left: 220px;
+    margin-left: 220px !important
   }
 
   &.collapsed {
-    margin-left: 64px;
+    margin-left: 64px !important;
   }
 
   main {

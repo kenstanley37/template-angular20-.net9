@@ -39,7 +39,11 @@ export class AuthService {
     );
   }
 
-  getProfile(): Observable<ProfileDto> {
+  getProfile(): Observable<any> {
+    if(this.userProfile()) {
+      return of(this.userProfile());
+    }
+
     return this.http.get<ProfileDto>(`${environment.apiUrl}/auth/profile`, { withCredentials: true }).pipe(
       tap(profile => this.userProfile.set(profile)),
       catchError((error: HttpErrorResponse) => {
@@ -86,7 +90,7 @@ export class AuthService {
   checkAuthStatus(): Observable<boolean> {
     return this.http.get<{ isAuthenticated: boolean }>(`${environment.apiUrl}/auth/check`, { withCredentials: true }).pipe(
       map(response => {
-        console.log('Auth status:', response.isAuthenticated);
+        //console.log('Auth status:', response.isAuthenticated);
         this.isAuthenticated.set(response.isAuthenticated);
         return response.isAuthenticated;
       }),

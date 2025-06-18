@@ -49,7 +49,7 @@ export class Toolbar {
 
   constructor() {
     // Fetch profile only if not already set
-    if (!this.authService.userProfile()) {
+    if (!this.profile) {
       this.authService.getProfile().subscribe({
         next: (profile) => {
           this.profile = profile

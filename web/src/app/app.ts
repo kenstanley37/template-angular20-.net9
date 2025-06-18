@@ -81,7 +81,7 @@ export class App {
   checkAuthStatus() {
     this.authService.checkAuthStatus().subscribe({
       next: (isAuthenticated: boolean) => {
-        console.log('Authentication status:', isAuthenticated);
+        //console.log('Authentication status:', isAuthenticated);
         this.isAuthenticated.set(isAuthenticated);
         if (isAuthenticated) {
           this.authService.getProfile().subscribe({
@@ -99,12 +99,6 @@ export class App {
         }
       }
     });
-  }
-
-  onScroll(event: Event) {
-    const scrollTop = (event.target as HTMLElement).scrollTop;
-    this.hideFooter.set(scrollTop > this.lastScrollTop);
-    this.lastScrollTop = scrollTop;
   }
 
   toggleSidenav() {
