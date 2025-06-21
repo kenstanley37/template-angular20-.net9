@@ -1,0 +1,18 @@
+<h2 mat-dialog-title>{{ data.title || 'Are you sure?' }}</h2>
+
+<mat-dialog-content>
+  <p>{{ data.message }}</p>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="dialogRef.close(false)">
+    {{ data.cancelText || 'Cancel' }}
+  </button>
+  <button
+    mat-raised-button
+    [color]="data.danger ? 'warn' : 'primary'"
+    (click)="dialogRef.close(true)"
+  >
+    {{ data.confirmText || 'Confirm' }}
+  </button>
+</mat-dialog-actions>

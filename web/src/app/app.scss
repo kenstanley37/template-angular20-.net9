@@ -20,6 +20,7 @@ mat-sidenav-content.main-content {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  width: 100%;
   transition: margin-left 0.25s ease;
   top: 64px;
 
@@ -31,9 +32,10 @@ mat-sidenav-content.main-content {
     margin-left: 64px !important;
   }
 
-  main {
+  .main {
     flex: 1;
     padding: 16px;
     overflow: auto;
+    //width: 100% !important;
   }
 }

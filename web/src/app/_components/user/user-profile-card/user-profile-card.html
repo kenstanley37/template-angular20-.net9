@@ -1,0 +1,28 @@
+<div class="profile-details">
+  <div class="profile-picture-wrapper">
+    <img
+      [src]="profile!.profilePicture || 'default-avatar.png'"
+      class="profile-pic"
+      alt="Profile Picture"
+    />
+    <button
+      mat-icon-button
+      class="camera-button"
+      (click)="fileInput.click()"
+      matTooltip="Change photo"
+      aria-label="Upload new profile picture"
+    >
+      <mat-icon>photo_camera</mat-icon>
+    </button>
+    <input
+      #fileInput
+      type="file"
+      hidden
+      (change)="onFileSelected($event)"
+      accept="image/jpeg,image/png"
+    />
+  </div>
+
+  <p><strong>Name:</strong> {{ profile!.name }}</p>
+  <p><strong>Email:</strong> {{ profile!.email }}</p>
+</div>

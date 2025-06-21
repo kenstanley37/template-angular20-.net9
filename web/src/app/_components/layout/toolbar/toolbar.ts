@@ -53,8 +53,8 @@ export class Toolbar {
       this.authService.getProfile().subscribe({
         next: (profile) => {
           this.profile = profile
-          console.log('Profile fetched:', profile);
-          console.log('isAuthenticated:', this.isAuthenticated);
+          //console.log('Profile fetched:', profile);
+          //console.log('isAuthenticated:', this.isAuthenticated);
         },
         error: (err) => console.error('Error fetching profile:', err)
       });
@@ -68,10 +68,10 @@ export class Toolbar {
 
   toggleSidenav() {
     // Toggle the sidenav state
-    console.log('Toggling sidenav. Current state:', this.isSidenavOpen());
+    //console.log('Toggling sidenav. Current state:', this.isSidenavOpen());
     this.isSidenavOpen.set(!this.isSidenavOpen());
     this.toggle.emit(this.isSidenavOpen());
-    console.log('New sidenav state:', this.isSidenavOpen());
+    //console.log('New sidenav state:', this.isSidenavOpen());
   }
 
   logout() {

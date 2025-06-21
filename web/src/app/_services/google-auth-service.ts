@@ -39,10 +39,7 @@ export class GoogleAuthService {
 
   private handleCredentialResponse(response: any) {
     console.log('Credential:', response.credential);
-    this.authService.socialLogin('google-login', {
-      token: response.credential,
-      stayLoggedIn: false
-    }).pipe(
+    this.authService.googleLogin(response.credential).pipe(
       map((user: ProfileDto) => {
         console.log('Name:', user.name);
         console.log('Email:', user.email);

@@ -2,33 +2,50 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  //height: 100vh; // Full viewport height
+  width: 100%;
   background-color: #f5f5f5;
+
+  // Remove this unless you're debugging:
+   border: #3f51b5 1px solid;
 }
 
 mat-card {
   width: 100%;
   max-width: 400px;
-  padding: 24px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  background: #ffffff;
 }
 
 mat-card-title {
   font-size: 24px;
-  font-weight: bold;
+  font-weight: 600;
   color: #3f51b5;
+  text-align: center;
+  margin-bottom: 1rem;
 }
 
 form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 1rem;
+
+  mat-form-field {
+    width: 100%;
+  }
 }
 
 .actions {
   display: flex;
   justify-content: space-between;
-  margin-top: 16px;
+  gap: 1rem;
+  margin-top: 1rem;
+
+  button {
+    flex: 1;
+  }
 }
 
 .social-login {
@@ -45,12 +62,13 @@ form {
   vertical-align: middle;
 }
 
+mat-checkbox {
+  margin-top: 0.5rem;
+}
+
 .error-message {
   color: #d32f2f;
   font-size: 14px;
-  margin-top: 8px;
-}
-
-mat-checkbox {
-  margin: 8px 0;
+  text-align: center;
+  margin-top: 1rem;
 }
