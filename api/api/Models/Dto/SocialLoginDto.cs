@@ -14,5 +14,6 @@
         /// Gets or sets a value indicating whether to keep the user logged in with a refresh token.
         /// </summary>
         public bool StayLoggedIn { get; set; }
+        public string DeviceId { get; set; } = string.Empty; // New device id
     }
 }

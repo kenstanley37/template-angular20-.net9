@@ -1,6 +1,7 @@
 ﻿using api.Data;
 using api.Models;
 using api.Models.Dto;
+using api.Services;
 using Google.Apis.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -27,15 +28,24 @@ namespace api.Controllers
         private readonly AuthDbContext _context;
         private readonly IConfiguration _configuration;
         private readonly HttpClient _httpClient;
+        private readonly ILogger<AuthController> _logger;
+        private readonly iTokenService _tokenService;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AuthController"/> class.
         /// </summary>
-        public AuthController(AuthDbContext context, IConfiguration configuration, IHttpClientFactory httpClientFactory)
+        public AuthController(
+            AuthDbContext context,
+            IConfiguration configuration,
+            IHttpClientFactory httpClientFactory,
+            ILogger<AuthController> logger,
+            iTokenService tokenService)
         {
-            _context = context;
-            _configuration = configuration;
-            _httpClient = httpClientFactory.CreateClient();
+            _context = context ?? throw new ArgumentNullException(nameof(context));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _httpClient = httpClientFactory.CreateClient() ?? throw new ArgumentNullException(nameof(httpClientFactory));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _tokenService = tokenService ?? throw new ArgumentNullException(nameof(tokenService));
         }
 
         /// <summary>
@@ -44,30 +54,54 @@ namespace api.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
-            // Check if email already exists
-            if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
+            try
             {
-                return BadRequest("Email already exists.");
+                _logger.LogInformation("Register attempt for email: {Email}", dto?.Email);
+
+                if (dto == null)
+                {
+                    _logger.LogWarning("Register attempt with null DTO");
+                    return BadRequest(ApiResponse<string>.Error("Invalid registration data", 400));
+                }
+
+                if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
+                {
+                    _logger.LogWarning("Attempt to register with existing email: {Email}", dto.Email);
+                    return BadRequest(ApiResponse<string>.Error("Email already exists", 400));
+                }
+
+                var verificationToken = Guid.NewGuid().ToString();
+                var user = new User
+                {
+                    Name = dto.Name,
+                    Email = dto.Email,
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
+                    EmailVerificationToken = verificationToken
+                };
+
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
+
+                await SendVerificationEmail(user.Email, verificationToken);
+                _logger.LogInformation("User registered successfully: {Email}", user.Email);
+
+                return Ok(ApiResponse<string>.Ok("User registered successfully. Please check your email to verify your account."));
             }
-
-            // Create new user with hashed password and verification token
-            var verificationToken = Guid.NewGuid().ToString();
-            var user = new User
+            catch (SmtpException ex)
             {
-                Name = dto.Name,
-                Email = dto.Email,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
-                EmailVerificationToken = verificationToken
-            };
-
-            // Save user to database
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-
-            // Send email verification link
-            await SendVerificationEmail(user.Email, verificationToken);
-
-            return Ok("User registered successfully. Please check your email to verify your account.");
+                _logger.LogError(ex, "Failed to send verification email for {Email}", dto?.Email);
+                return StatusCode(500, ApiResponse<string>.Error("Failed to send verification email", 500));
+            }
+            catch (DbUpdateException ex)
+            {
+                _logger.LogError(ex, "Database error during registration for {Email}", dto?.Email);
+                return StatusCode(500, ApiResponse<string>.Error("Database error occurred during registration", 500));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during registration for {Email}", dto?.Email);
+                return StatusCode(500, ApiResponse<string>.Error("An unexpected error occurred during registration", 500));
+            }
         }
 
         /// <summary>
@@ -76,31 +110,131 @@ namespace api.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto dto)
         {
-            // Find user by email and verify password
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
-            if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
+            try
             {
-                return Unauthorized("Invalid credentials.");
-            }
+                _logger.LogInformation("Login attempt for email: {Email}", dto?.Email);
 
-            // Ensure email is verified
-            if (!user.IsEmailVerified)
+                if (dto == null)
+                {
+                    _logger.LogWarning("Login attempt with null DTO");
+                    return BadRequest(ApiResponse<string>.Error("Invalid login data", 400));
+                }
+
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
+
+                var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+                var userAgent = Request.Headers["User-Agent"].ToString();
+
+                // Log attempt regardless of success
+                async Task LogAttempt(int? userId, bool success)
+                {
+                    if (userId == null) return;
+
+                    var attempt = new LoginAttempt
+                    {
+                        UserId = userId.Value,
+                        Success = success,
+                        IpAddress = ipAddress,
+                        UserAgent = userAgent,
+                        AttemptedAt = DateTime.UtcNow
+                    };
+                    _context.LoginAttempts.Add(attempt);
+                    await _context.SaveChangesAsync();
+                }
+
+                // If user not found or password invalid
+                if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
+                {
+                    if (user != null)
+                    {
+                        user.FailedLoginAttempts++;
+                        user.LastFailedLoginAt = DateTime.UtcNow;
+
+                        if (user.FailedLoginAttempts >= 5)
+                        {
+                            user.LockoutEnd = DateTime.UtcNow.AddMinutes(15);
+                        }
+
+                        await _context.SaveChangesAsync();
+                        await LogAttempt(user.Id, false);
+                    }
+                    else
+                    {
+                        // user == null: log attempt without userId
+                        await LogAttempt(null, false);
+                    }
+
+                    _logger.LogWarning("Invalid login attempt for {Email}", dto.Email);
+                    return Unauthorized(ApiResponse<string>.Error("Invalid credentials", 401));
+                }
+
+                // Check for lockout
+                if (user.LockoutEnd.HasValue && user.LockoutEnd > DateTime.UtcNow)
+                {
+                    _logger.LogWarning("Locked out login attempt for {Email}", dto.Email);
+                    await LogAttempt(user.Id, false);
+                    return Unauthorized(ApiResponse<string>.Error("Account is locked. Try again later.", 401));
+                }
+
+                // Check email verification
+                if (!user.IsEmailVerified)
+                {
+                    _logger.LogWarning("Login attempt with unverified email: {Email}", dto.Email);
+                    await LogAttempt(user.Id, false);
+                    return Unauthorized(ApiResponse<string>.Error("Please verify your email before logging in", 401));
+                }
+
+                // Successful login: reset failed attempts
+                user.FailedLoginAttempts = 0;
+                user.LockoutEnd = null;
+                user.LastLoginIp = ipAddress;
+                user.LastLoginUserAgent = userAgent;
+                user.UpdatedAt = DateTime.UtcNow;
+
+                await _context.SaveChangesAsync();
+                await LogAttempt(user.Id, true);
+
+                var token = _tokenService.GenerateJwtToken(user);
+                var cookieOptions = _tokenService.GetAuthCookieOptions();
+                Response.Cookies.Append("auth_token", token, cookieOptions);
+
+                if (dto.StayLoggedIn)
+                {
+                    var refreshToken = await _tokenService.GenerateRefreshToken(user, dto.DeviceId);
+                    var cookieRefresh = _tokenService.GetRefreshCookieOptions();
+                    Response.Cookies.Append("refresh_token", refreshToken.Token, cookieRefresh);
+                }
+
+                _logger.LogInformation("User logged in successfully: {Email}", user.Email);
+                return Ok(ApiResponse<object>.Ok(null, "Login successful"));
+            }
+            catch (DbUpdateException ex)
             {
-                return Unauthorized("Please verify your email before logging in.");
+                _logger.LogError(ex, "Database error during login for {Email}", dto?.Email);
+                return StatusCode(500, ApiResponse<string>.Error("Database error occurred during login", 500));
             }
-
-            // Generate and set JWT token
-            var token = GenerateJwtToken(user);
-            SetAuthCookie(token);
-
-            // Generate and set refresh token if requested
-            if (dto.StayLoggedIn)
+            catch (Exception ex)
             {
-                var refreshToken = await GenerateRefreshToken(user);
-                SetRefreshCookie(refreshToken.Token);
+                _logger.LogError(ex, "Unexpected error during login for {Email}", dto?.Email);
+                return StatusCode(500, ApiResponse<string>.Error("An unexpected error occurred during login", 500));
             }
+        }
 
-            return Ok();
+        private async Task LogAttempt(int? userId, bool success, string? ipAddress, string? userAgent)
+        {
+            if (userId == null) return;
+
+            var attempt = new LoginAttempt
+            {
+                UserId = userId.Value,
+                Success = success,
+                IpAddress = ipAddress,
+                UserAgent = userAgent,
+                AttemptedAt = DateTime.UtcNow
+            };
+
+            _context.LoginAttempts.Add(attempt);
+            await _context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -109,19 +243,40 @@ namespace api.Controllers
         [HttpGet("verify-email")]
         public async Task<IActionResult> VerifyEmail([FromQuery] string token)
         {
-            // Find user by verification token
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.EmailVerificationToken == token);
-            if (user == null)
+            try
             {
-                return BadRequest("Invalid verification token.");
+                _logger.LogInformation("Email verification attempt with token: {Token}", token);
+
+                if (string.IsNullOrEmpty(token))
+                {
+                    _logger.LogWarning("Email verification attempt with empty token");
+                    return BadRequest(ApiResponse<string>.Error("Verification token is required", 400));
+                }
+
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.EmailVerificationToken == token);
+                if (user == null)
+                {
+                    _logger.LogWarning("Invalid email verification token: {Token}", token);
+                    return BadRequest(ApiResponse<string>.Error("Invalid verification token", 400));
+                }
+
+                user.IsEmailVerified = true;
+                user.EmailVerificationToken = null;
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation("Email verified successfully for user: {Email}", user.Email);
+                return Ok(ApiResponse<string>.Ok("Email verified successfully"));
             }
-
-            // Mark email as verified
-            user.IsEmailVerified = true;
-            user.EmailVerificationToken = null;
-            await _context.SaveChangesAsync();
-
-            return Ok("Email verified successfully.");
+            catch (DbUpdateException ex)
+            {
+                _logger.LogError(ex, "Database error during email verification with token: {Token}", token);
+                return StatusCode(500, ApiResponse<string>.Error("Database error occurred during email verification", 500));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during email verification with token: {Token}", token);
+                return StatusCode(500, ApiResponse<string>.Error("An unexpected error occurred during email verification", 500));
+            }
         }
 
         /// <summary>
@@ -132,20 +287,26 @@ namespace api.Controllers
         {
             try
             {
-                // Validate Google token
+                _logger.LogInformation("Google login attempt");
+
+                if (authToken == null || string.IsNullOrEmpty(authToken.Token))
+                {
+                    _logger.LogWarning("Google login attempt with invalid DTO or token");
+                    return BadRequest(ApiResponse<string>.Error("Invalid Google token", 400));
+                }
+
                 var settings = new GoogleJsonWebSignature.ValidationSettings
                 {
                     Audience = new[] { _configuration["Google:ClientId"] }
                 };
                 var payload = await GoogleJsonWebSignature.ValidateAsync(authToken.Token, settings);
 
-                // Check payload validity
                 if (string.IsNullOrEmpty(payload.Email) || string.IsNullOrEmpty(payload.Subject))
                 {
-                    return BadRequest("Invalid Google token payload: missing email or sub.");
+                    _logger.LogWarning("Google login failed: missing email or subject in token");
+                    return BadRequest(ApiResponse<string>.Error("Invalid Google token payload", 400));
                 }
 
-                // Find or create user
                 var user = await _context.Users.FirstOrDefaultAsync(u => u.GoogleId == payload.Subject || u.Email == payload.Email);
                 if (user == null)
                 {
@@ -168,35 +329,37 @@ namespace api.Controllers
 
                 await _context.SaveChangesAsync();
 
-                // Generate and set tokens
-                var token = GenerateJwtToken(user);
-                SetAuthCookie(token);
+                var token = _tokenService.GenerateJwtToken(user);
+                var cookieOptions = _tokenService.GetAuthCookieOptions();
+                Response.Cookies.Append("auth_token", token, cookieOptions);
 
-                if (authToken.StayLoggedIn)
-                {
-                    //var refreshToken = await GenerateRefreshToken(user);
-                    //SetRefreshCookie(refreshToken.Token);
-                }
+                var refreshToken = await _tokenService.GenerateRefreshToken(user, authToken.DeviceId);
+                var refreshCookieOptions = _tokenService.GetRefreshCookieOptions();
+                Response.Cookies.Append("refresh_token", refreshToken.Token, refreshCookieOptions);
 
-                var refreshToken = await GenerateRefreshToken(user);
-                SetRefreshCookie(refreshToken.Token);
-
-                // Return user profile
-                return Ok(new ProfileDto
+                _logger.LogInformation("Google login success for user: {Email}", payload.Email);
+                return Ok(ApiResponse<ProfileDto>.Ok(new ProfileDto
                 {
                     Name = payload.Name,
                     Email = payload.Email,
                     ProfilePicture = payload.Picture,
                     Id = user.Id
-                });
+                }, "Google login successful"));
             }
-            catch (InvalidJwtException)
+            catch (InvalidJwtException ex)
             {
-                return Unauthorized("Invalid Google token.");
+                _logger.LogWarning(ex, "Invalid Google token during login");
+                return Unauthorized(ApiResponse<string>.Error("Invalid Google token", 401));
+            }
+            catch (DbUpdateException ex)
+            {
+                _logger.LogError(ex, "Database error during Google login");
+                return StatusCode(500, ApiResponse<string>.Error("Database error occurred during Google login", 500));
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                _logger.LogError(ex, "Unexpected error during Google login");
+                return StatusCode(500, ApiResponse<string>.Error($"An unexpected error occurred: {ex.Message}", 500));
             }
         }
 
@@ -208,20 +371,27 @@ namespace api.Controllers
         {
             try
             {
-                // Validate Facebook token
-                var payload = await ValidateFacebookToken(authToken.Token);
+                _logger.LogInformation("Facebook login attempt");
+
+                if (authToken == null || string.IsNullOrEmpty(authToken.Token))
+                {
+                    _logger.LogWarning("Facebook login attempt with invalid DTO or token");
+                    return BadRequest(ApiResponse<string>.Error("Invalid Facebook token", 400));
+                }
+
+                var payload = await _tokenService.ValidateFacebookToken(authToken.Token);
                 if (payload == null)
                 {
-                    return BadRequest("Invalid Facebook token.");
+                    _logger.LogWarning("Invalid Facebook token");
+                    return BadRequest(ApiResponse<string>.Error("Invalid Facebook token", 400));
                 }
 
-                // Check payload validity
                 if (string.IsNullOrEmpty(payload.Email) || string.IsNullOrEmpty(payload.Id))
                 {
-                    return BadRequest("Invalid Facebook token payload: missing email or id.");
+                    _logger.LogWarning("Invalid Facebook token payload");
+                    return BadRequest(ApiResponse<string>.Error("Invalid Facebook token payload", 400));
                 }
 
-                // Find or create user
                 var user = await _context.Users.FirstOrDefaultAsync(u => u.FacebookId == payload.Id || u.Email == payload.Email);
                 if (user == null)
                 {
@@ -244,21 +414,33 @@ namespace api.Controllers
 
                 await _context.SaveChangesAsync();
 
-                // Generate and set tokens
-                var token = GenerateJwtToken(user);
-                SetAuthCookie(token);
+                var token = _tokenService.GenerateJwtToken(user);
+                var cookieOptions = _tokenService.GetAuthCookieOptions();
 
                 if (authToken.StayLoggedIn)
                 {
-                    var refreshToken = await GenerateRefreshToken(user);
-                    SetRefreshCookie(refreshToken.Token);
+                    var refreshToken = await _tokenService.GenerateRefreshToken(user, authToken.DeviceId);
+                    var refreshCookieOptions = _tokenService.GetRefreshCookieOptions();
+                    Response.Cookies.Append("refresh_token", refreshToken.Token, refreshCookieOptions);
                 }
 
-                return Ok();
+                _logger.LogInformation("Facebook login success for user: {Email}", user.Email);
+                return Ok(ApiResponse<object>.Ok(null, "Facebook login successful"));
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "Failed to validate Facebook token");
+                return StatusCode(500, ApiResponse<string>.Error("Failed to validate Facebook token", 500));
+            }
+            catch (DbUpdateException ex)
+            {
+                _logger.LogError(ex, "Database error during Facebook login");
+                return StatusCode(500, ApiResponse<string>.Error("Database error occurred during Facebook login", 500));
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                _logger.LogError(ex, "Unexpected error during Facebook login");
+                return StatusCode(500, ApiResponse<string>.Error("An unexpected error occurred during Facebook login", 500));
             }
         }
 
@@ -268,30 +450,68 @@ namespace api.Controllers
         [HttpPost("refresh")]
         public async Task<IActionResult> Refresh()
         {
-            // Retrieve refresh token from cookie
-            var refreshToken = Request.Cookies["refresh_token"];
-            if (string.IsNullOrEmpty(refreshToken))
+            try
             {
-                return Unauthorized("No refresh token provided.");
+                _logger.LogInformation("Token refresh attempt");
+
+                var deviceId = Request.Headers["X-Device-Id"].ToString();
+                if (string.IsNullOrEmpty(deviceId))
+                {
+                    return BadRequest(ApiResponse<string>.Error("Device ID is required", 400));
+                }
+
+                var refreshToken = Request.Cookies["refresh_token"];
+                if (string.IsNullOrEmpty(refreshToken))
+                {
+                    _logger.LogWarning("Token refresh attempt with no refresh token");
+                    return Unauthorized(ApiResponse<string>.Error("No refresh token provided", 401));
+                }
+
+                var tokenEntity = await _context.RefreshTokens
+                    .Include(t => t.User)
+                    .FirstOrDefaultAsync(t => t.Token == refreshToken && !t.IsRevoked && t.Expires > DateTime.UtcNow && t.DeviceId == deviceId);
+
+                if (tokenEntity == null)
+                {
+                    _logger.LogWarning("Invalid or expired refresh token: {Token}", refreshToken);
+                    Response.Cookies.Delete("refresh_token");
+                    return Unauthorized(ApiResponse<string>.Error("Invalid or expired refresh token", 401));
+                }
+
+                // Revoke the old refresh token
+                tokenEntity.IsRevoked = true;
+
+                // Generate new refresh token
+                var newRefreshToken = await _tokenService.GenerateRefreshToken(tokenEntity.User, deviceId);
+
+                // Generate new JWT token
+                var newJwt = _tokenService.GenerateJwtToken(tokenEntity.User);
+
+                // Save changes (revoked old token, added new token)
+                await _context.SaveChangesAsync();
+
+                // Set cookies with new tokens
+                var cookieOptions = _tokenService.GetAuthCookieOptions();
+                Response.Cookies.Append("auth_token", newJwt, cookieOptions);
+
+                var refreshCookieOptions = _tokenService.GetRefreshCookieOptions();
+                Response.Cookies.Append("refresh_token", newRefreshToken.Token, refreshCookieOptions);
+
+                _logger.LogInformation("Token refreshed successfully for user: {Email}", tokenEntity.User.Email);
+                return Ok(ApiResponse<object>.Ok(null, "Token refreshed successfully"));
             }
-
-            // Validate refresh token
-            var tokenEntity = await _context.RefreshTokens
-                .Include(t => t.User)
-                .FirstOrDefaultAsync(t => t.Token == refreshToken && !t.IsRevoked && t.Expires > DateTime.UtcNow);
-
-            if (tokenEntity == null)
+            catch (DbUpdateException ex)
             {
-                Response.Cookies.Delete("refresh_token");
-                return Unauthorized("Invalid or expired refresh token.");
+                _logger.LogError(ex, "Database error during token refresh");
+                return StatusCode(500, ApiResponse<string>.Error("Database error occurred during token refresh", 500));
             }
-
-            // Generate and set new JWT token
-            var newJwt = GenerateJwtToken(tokenEntity.User);
-            SetAuthCookie(newJwt);
-
-            return Ok();
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during token refresh");
+                return StatusCode(500, ApiResponse<string>.Error("An unexpected error occurred during token refresh", 500));
+            }
         }
+
 
         /// <summary>
         /// Logs out a user by revoking refresh token and clearing cookies.
@@ -299,95 +519,106 @@ namespace api.Controllers
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {
-            // Revoke refresh token if present
-            var refreshToken = Request.Cookies["refresh_token"];
-            if (!string.IsNullOrEmpty(refreshToken))
+            try
             {
-                var tokenEntity = await _context.RefreshTokens.FirstOrDefaultAsync(t => t.Token == refreshToken);
-                if (tokenEntity != null)
-                {
-                    tokenEntity.IsRevoked = true;
-                    await _context.SaveChangesAsync();
-                }
-                Response.Cookies.Delete("refresh_token");
-            }
+                _logger.LogInformation("Logout attempt");
 
-            // Clear auth token cookie
-            Response.Cookies.Delete("auth_token");
-            return Ok();
+                var refreshToken = Request.Cookies["refresh_token"];
+                if (!string.IsNullOrEmpty(refreshToken))
+                {
+                    var tokenEntity = await _context.RefreshTokens.FirstOrDefaultAsync(t => t.Token == refreshToken);
+                    if (tokenEntity != null)
+                    {
+                        tokenEntity.IsRevoked = true;
+                        await _context.SaveChangesAsync();
+                        _logger.LogInformation("Refresh token revoked: {Token}", refreshToken);
+                    }
+                }
+
+
+                var refreshCookieOptions = _tokenService.GetRefreshCookieOptions();
+                var authCookieOptions = _tokenService.GetAuthCookieOptions();
+                // Cookie options that match how they were originally set
+
+                Response.Cookies.Delete("refresh_token", refreshCookieOptions);
+                Response.Cookies.Delete("auth_token", authCookieOptions);
+
+                _logger.LogInformation("User logged out successfully");
+                return Ok(ApiResponse<object>.Ok(null, "Logout successful"));
+            }
+            catch (DbUpdateException ex)
+            {
+                _logger.LogError(ex, "Database error during logout");
+                return StatusCode(500, ApiResponse<string>.Error("Database error occurred during logout", 500));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during logout");
+                return StatusCode(500, ApiResponse<string>.Error("An unexpected error occurred during logout", 500));
+            }
         }
 
-        /// <summary>
-        /// Retrieves the authenticated user's profile.
-        /// </summary>
-        [HttpGet("profile")]
-        public async Task<IActionResult> GetProfile()
-        {
-            var token = Request.Cookies["auth_token"];
-            var email = ValidateJwtToken(token);
-            if (string.IsNullOrEmpty(email))
-            {
-                var refreshResult = await TryRefreshToken();
-                if (refreshResult != null)
-                {
-                    return refreshResult;
-                }
-                Response.Cookies.Delete("auth_token");
-                return Unauthorized(new { success = false, message = "User not authenticated." }); // Return JSON
-            }
 
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
-            if (user == null)
-            {
-                return NotFound(new { success = false, message = "User not found." }); // Return JSON
-            }
-
-            return Ok(new ProfileDto
-            {
-                Name = user.Name,
-                Email = user.Email,
-                ProfilePicture = user.ProfilePicture
-            });
-        }
 
         /// <summary>
         /// Updates the authenticated user's profile picture.
         /// </summary>
         [HttpPost("profile/picture")]
-        public async Task<IActionResult> UpdateProfilePicture([FromBody] UpdateProfilePictureDto dto)
+        public async Task<IActionResult> UpdateProfilePicture([FromBody] UpdateProfilePictureDto dto)  
         {
-            // Validate JWT token
-            var token = Request.Cookies["auth_token"];
-            var email = ValidateJwtToken(token);
-            if (string.IsNullOrEmpty(email))
+            try
             {
-                var refreshResult = await TryRefreshToken();
-                if (refreshResult != null)
+                _logger.LogInformation("Profile picture update attempt");
+
+                if (dto == null)
                 {
-                    return refreshResult;
+                    _logger.LogWarning("Profile picture update attempt with null DTO");
+                    return BadRequest(ApiResponse<string>.Error("Invalid profile picture data", 400));
                 }
-                Response.Cookies.Delete("auth_token");
-                return Unauthorized("User not authenticated.");
-            }
 
-            // Find user by email
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
-            if (user == null)
+                var token = Request.Cookies["auth_token"];
+                var email = _tokenService.ValidateJwtToken(token!);
+                if (string.IsNullOrEmpty(email))
+                {
+                    _logger.LogWarning("Profile picture update attempt with invalid token");
+                    var refreshResult = await TryRefreshToken();
+                    if (refreshResult != null)
+                    {
+                        return refreshResult;
+                    }
+                    Response.Cookies.Delete("auth_token");
+                    return Unauthorized(ApiResponse<string>.Error("User not authenticated", 401));
+                }
+
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+                if (user == null)
+                {
+                    _logger.LogWarning("User not found for email: {Email}", email);
+                    return NotFound(ApiResponse<string>.Error("User not found", 404));
+                }
+
+                if (!string.IsNullOrEmpty(dto.ProfilePicture) && !IsValidBase64Image(dto.ProfilePicture))
+                {
+                    _logger.LogWarning("Invalid base64 image format for user: {Email}", email);
+                    return BadRequest(ApiResponse<string>.Error("Invalid image format. Must be a valid Base64-encoded image (JPEG or PNG)", 400));
+                }
+
+                user.ProfilePicture = dto.ProfilePicture;
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation("Profile picture updated successfully for user: {Email}", email);
+                return Ok(ApiResponse<string>.Ok("Profile picture updated successfully"));
+            }
+            catch (DbUpdateException ex)
             {
-                return NotFound("User not found.");
+                _logger.LogError(ex, "Database error during profile picture update");
+                return StatusCode(500, ApiResponse<string>.Error("Database error occurred during profile picture update", 500));
             }
-
-            // Validate base64 image
-            if (!string.IsNullOrEmpty(dto.ProfilePicture) && !IsValidBase64Image(dto.ProfilePicture))
+            catch (Exception ex)
             {
-                return BadRequest("Invalid image format. Must be a valid Base64-encoded image (JPEG or PNG).");
+                _logger.LogError(ex, "Unexpected error during profile picture update");
+                return StatusCode(500, ApiResponse<string>.Error("An unexpected error occurred during profile picture update", 500));
             }
-
-            // Update profile picture
-            user.ProfilePicture = dto.ProfilePicture;
-            await _context.SaveChangesAsync();
-
-            return Ok("Profile picture updated successfully.");
         }
 
         /// <summary>
@@ -395,254 +626,144 @@ namespace api.Controllers
         /// </summary>
         private async Task<IActionResult?> TryRefreshToken()
         {
-            var refreshToken = Request.Cookies["refresh_token"];
-            if (string.IsNullOrEmpty(refreshToken))
-            {
-                return null;
-            }
-
-            var tokenEntity = await _context.RefreshTokens
-                .Include(t => t.User)
-                .FirstOrDefaultAsync(t => t.Token == refreshToken && !t.IsRevoked && t.Expires > DateTime.UtcNow);
-
-            if (tokenEntity == null)
-            {
-                Response.Cookies.Delete("refresh_token");
-                return Unauthorized("Invalid or expired refresh token.");
-            }
-
-            var newJwt = GenerateJwtToken(tokenEntity.User);
-            SetAuthCookie(newJwt);
-
-            return null;
-        }
-
-        /// <summary>
-        /// Sets the JWT token in an HTTP-only cookie.
-        /// </summary>
-        private void SetAuthCookie(string token)
-        {
-            var cookieOptions = new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.None,
-                Path = "/",
-                Expires = DateTime.UtcNow.AddHours(1)
-            };
-            Response.Cookies.Append("auth_token", token, cookieOptions);
-        }
-
-        /// <summary>
-        /// Sets the refresh token in an HTTP-only cookie.
-        /// </summary>
-        private void SetRefreshCookie(string token)
-        {
-            var cookieOptions = new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.None,
-                Path = "/",
-                Expires = DateTime.UtcNow.AddDays(30)
-            };
-            Response.Cookies.Append("refresh_token", token, cookieOptions);
-        }
-
-        /// <summary>
-        /// Generates a new refresh token for a user.
-        /// </summary>
-        private async Task<RefreshToken> GenerateRefreshToken(User user)
-        {
-            var refreshToken = new RefreshToken
-            {
-                UserId = user.Id,
-                Token = Guid.NewGuid().ToString(),
-                Expires = DateTime.UtcNow.AddDays(30),
-                IsRevoked = false
-            };
-
-            _context.RefreshTokens.Add(refreshToken);
-            await _context.SaveChangesAsync();
-
-            return refreshToken;
-        }
-
-        /// <summary>
-        /// Validates a JWT token and returns the email claim.
-        /// </summary>
-        private string? ValidateJwtToken(string token)
-        {
-            var jwtKey = _configuration["Jwt:Key"] ?? throw new InvalidOperationException("Jwt:Key not found.");
-            var jwtIssuer = _configuration["Jwt:Issuer"] ?? throw new InvalidOperationException("Jwt:Issuer not found.");
-            var jwtAudience = _configuration["Jwt:Audience"] ?? throw new InvalidOperationException("Jwt:Audience not found.");
-
-            var tokenHandler = new JwtSecurityTokenHandler();
             try
             {
-                tokenHandler.ValidateToken(token, new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    ValidIssuer = jwtIssuer,
-                    ValidAudience = jwtAudience,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
-                }, out var validatedToken);
+                _logger.LogInformation("Attempting to refresh token");
 
-                var jwtToken = validatedToken as JwtSecurityToken;
-                return jwtToken?.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub)?.Value;
-            }
-            catch
-            {
+                var refreshToken = Request.Cookies["refresh_token"];
+                if (string.IsNullOrEmpty(refreshToken))
+                {
+                    _logger.LogWarning("No refresh token provided for token refresh");
+                    return null;
+                }
+
+                var tokenEntity = await _context.RefreshTokens
+                    .Include(t => t.User)
+                    .FirstOrDefaultAsync(t => t.Token == refreshToken && !t.IsRevoked && t.Expires > DateTime.UtcNow);
+
+                if (tokenEntity == null)
+                {
+                    _logger.LogWarning("Invalid or expired refresh token: {Token}", refreshToken);
+                    Response.Cookies.Delete("refresh_token");
+                    return Unauthorized(ApiResponse<string>.Error("Invalid or expired refresh token", 401));
+                }
+
+                var newJwt = _tokenService.GenerateJwtToken(tokenEntity.User);
+                var cookieOptions = _tokenService.GetAuthCookieOptions();
+
+                Response.Cookies.Append("auth_token", newJwt, cookieOptions);
+
+                _logger.LogInformation("Token refreshed successfully for user: {Email}", tokenEntity.User.Email);
                 return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during token refresh attempt");
+                return StatusCode(500, ApiResponse<string>.Error("An unexpected error occurred during token refresh", 500));
             }
         }
 
+       
+
+        
         /// <summary>
         /// Validates a base64-encoded image string.
         /// </summary>
         private bool IsValidBase64Image(string base64String)
         {
-            if (string.IsNullOrEmpty(base64String))
-            {
-                return true; // Allow empty to clear picture
-            }
-
             try
             {
+                if (string.IsNullOrEmpty(base64String))
+                {
+                    _logger.LogDebug("Empty base64 image string, considered valid for clearing");
+                    return true;
+                }
+
                 if (!base64String.StartsWith("data:image/"))
                 {
+                    _logger.LogWarning("Invalid base64 image format: missing data:image prefix");
                     return false;
                 }
 
                 var parts = base64String.Split(',');
                 if (parts.Length != 2)
                 {
+                    _logger.LogWarning("Invalid base64 image format: incorrect parts count");
                     return false;
                 }
 
                 var mimeType = parts[0].Split(';')[0].Replace("data:", "");
                 if (mimeType != "image/jpeg" && mimeType != "image/png")
                 {
+                    _logger.LogWarning("Invalid base64 image mime type: {MimeType}", mimeType);
                     return false;
                 }
 
                 Convert.FromBase64String(parts[1]);
+                _logger.LogDebug("Base64 image validated successfully");
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogWarning(ex, "Failed to validate base64 image");
                 return false;
             }
         }
 
-        /// <summary>
-        /// Generates a JWT token for a user.
-        /// </summary>
-        private string GenerateJwtToken(User user)
-        {
-            var jwtKey = _configuration["Jwt:Key"] ?? throw new InvalidOperationException("Jwt:Key not found.");
-            var jwtIssuer = _configuration["Jwt:Issuer"] ?? throw new InvalidOperationException("Jwt:Issuer not found.");
-            var jwtAudience = _configuration["Jwt:Audience"] ?? throw new InvalidOperationException("Jwt:Audience not found.");
-
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-
-            var claims = new[]
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Email),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(ClaimTypes.Name, user.Name)
-            };
-
-            var token = new JwtSecurityToken(
-                issuer: jwtIssuer,
-                audience: jwtAudience,
-                claims: claims,
-                expires: DateTime.UtcNow.AddHours(1),
-                signingCredentials: credentials);
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
+        
 
         /// <summary>
         /// Sends a verification email with a link to the user.
         /// </summary>
         private async Task SendVerificationEmail(string email, string token)
         {
-            var smtpHost = _configuration["Smtp:Host"];
-            var smtpPort = int.Parse(_configuration["Smtp:Port"]!);
-            var smtpUsername = _configuration["Smtp:Username"] ?? throw new InvalidOperationException("Invalid Smtp email address.");
-            var smtpPassword = _configuration["Smtp:Password"] ?? throw new InvalidOperationException("Invalid Smtp password.");
-            var frontendUrl = _configuration["Frontend:Url"] ?? throw new InvalidOperationException("Frontend:Url not found.");
-
-            var verificationLink = $"{frontendUrl}/verify-email?token={token}";
-            var message = new MailMessage
+            try
             {
-                From = new MailAddress(smtpUsername),
-                Subject = "Verify Your Email",
-                Body = $"<p>Please verify your email by clicking the link below:</p><a href=\"{verificationLink}\">Verify Email</a>",
-                IsBodyHtml = true
-            };
-            message.To.Add(email);
+                _logger.LogInformation("Sending verification email to: {Email}", email);
 
-            using var smtp = new SmtpClient(smtpHost, smtpPort)
+                var smtpHost = _configuration["Smtp:Host"] ?? throw new InvalidOperationException("Smtp:Host not found.");
+                var smtpPort = int.Parse(_configuration["Smtp:Port"] ?? throw new InvalidOperationException("Smtp:Port not found."));
+                var smtpUsername = _configuration["Smtp:Username"] ?? throw new InvalidOperationException("Invalid Smtp email address.");
+                var smtpPassword = _configuration["Smtp:Password"] ?? throw new InvalidOperationException("Invalid Smtp password.");
+                var frontendUrl = _configuration["Frontend:Url"] ?? throw new InvalidOperationException("Frontend:Url not found.");
+
+                var verificationLink = $"{frontendUrl}/verify-email?token={token}";
+                var message = new MailMessage
+                {
+                    From = new MailAddress(smtpUsername),
+                    Subject = "Verify Your Email",
+                    Body = $"<p>Please verify your email by clicking the link below:</p><a href=\"{verificationLink}\">Verify Email</a>",
+                    IsBodyHtml = true
+                };
+                message.To.Add(email);
+
+                using var smtp = new SmtpClient(smtpHost, smtpPort)
+                {
+                    Credentials = new NetworkCredential(smtpUsername, smtpPassword),
+                    EnableSsl = true
+                };
+
+                await smtp.SendMailAsync(message);
+                _logger.LogInformation("Verification email sent successfully to: {Email}", email);
+            }
+            catch (Exception ex)
             {
-                Credentials = new NetworkCredential(smtpUsername, smtpPassword),
-                EnableSsl = true
-            };
-
-            await smtp.SendMailAsync(message);
+                _logger.LogError(ex, "Failed to send verification email to: {Email}", email);
+                throw;
+            }
         }
-        //
+
+        /// <summary>
+        /// Checks if the user is authenticated.
+        /// </summary>
         [HttpGet("check")]
         [Authorize]
         public IActionResult CheckAuth()
         {
-            return Ok(new { isAuthenticated = true });
+            _logger.LogInformation("Authentication check successful for user: {Email}", User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value);
+            return Ok(ApiResponse<object>.Ok(new { isAuthenticated = true }, "Authentication check successful"));
         }
 
-
-        /// <summary>
-        /// Validates a Facebook token and retrieves user information.
-        /// </summary>
-        private async Task<FacebookTokenPayload?> ValidateFacebookToken(string token)
-        {
-            var appId = _configuration["Facebook:AppId"] ?? throw new InvalidOperationException("Facebook:AppId not found.");
-            var appSecret = _configuration["Facebook:AppSecret"] ?? throw new InvalidOperationException("Facebook:AppSecret not found.");
-
-            // Validate token
-            var response = await _httpClient.GetAsync($"https://graph.facebook.com/debug_token?input_token={token}&access_token={appId}|{appSecret}");
-            if (!response.IsSuccessStatusCode)
-            {
-                return null;
-            }
-
-            var content = await response.Content.ReadAsStringAsync();
-            var debugToken = JsonSerializer.Deserialize<FacebookDebugTokenResponse>(content, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
-
-            if (debugToken?.Data?.IsValid != true)
-            {
-                return null;
-            }
-
-            // Retrieve user information
-            var userResponse = await _httpClient.GetAsync($"https://graph.facebook.com/me?fields=id,name,email,picture&access_token={token}");
-            if (!userResponse.IsSuccessStatusCode)
-            {
-                return null;
-            }
-
-            var userContent = await userResponse.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<FacebookTokenPayload>(userContent, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
-        }
+        
     }
 }

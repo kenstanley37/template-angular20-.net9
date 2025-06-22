@@ -1,4 +1,5 @@
 using api.Data;
+using api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -28,6 +29,11 @@ namespace api
             builder.Services.AddDbContext<AuthDbContext>(options =>
                 options.UseSqlServer(connectionString));
 
+            // Token service for JWT and refresh token management
+            builder.Services.AddScoped<iTokenService, TokenService>();
+
+            builder.Services.AddHttpClient<TokenService>();
+
             // JWT Authentication configuration
             var jwtKey = builder.Configuration["Jwt:Key"]
                 ?? throw new InvalidOperationException("Jwt:Key not found.");
@@ -35,7 +41,6 @@ namespace api
                 ?? throw new InvalidOperationException("Jwt:Issuer not found.");
             var jwtAudience = builder.Configuration["Jwt:Audience"]
                 ?? throw new InvalidOperationException("Jwt:Audience not found.");
-
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {
@@ -107,7 +112,6 @@ namespace api
             app.UseAuthentication();                // Enable JWT auth
             app.UseAuthorization();                 // Enable role-based authorization
             app.MapControllers();                   // Map controller routes
-
             app.Run();                               // Start the app
         }
     }

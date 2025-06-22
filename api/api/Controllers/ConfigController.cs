@@ -28,7 +28,8 @@ namespace api.Controllers
             var config = new
             {
                 GoogleClientId = _configuration["Google:ClientId"],
-                FacebookAppId = _configuration["Facebook:AppId"]
+                FacebookAppId = _configuration["Facebook:AppId"],
+                AdSenseId = _configuration["Google:AdSenseId"]
             };
             return Ok(config);
         }

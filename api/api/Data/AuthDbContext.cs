@@ -22,5 +22,6 @@ namespace api.Data
         /// Gets or sets the refresh tokens table.
         /// </summary>
         public DbSet<RefreshToken> RefreshTokens { get; set; }
+        public DbSet<LoginAttempt> LoginAttempts { get; set; }
     }
 }
