@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, effect, inject, OnInit, signal } from '@angular/core';
 import { ProfileDto, UpdateProfilePictureDto } from '../../../_models/user-model';
 import { AuthService } from '../../../_services/auth-service';
 import { Router } from '@angular/router';
@@ -22,56 +22,29 @@ import { ConfirmService } from '../../../_services/confirm-service';
 })
 export class Profile implements OnInit {
 
-  profile = signal<ProfileDto | null>(null);
+  private authService = inject(AuthService);
+  private confirmService = inject(ConfirmService);
+  private router = inject(Router);
+
+  profile = this.authService.userProfile; // Use signal for reactive state
+  //profile = signal<ProfileDto | null>(null);
   isLoading = signal<boolean>(true);
   errorMessage = signal<string | undefined>(undefined);
   selectedFile: File | null = null;
 
   constructor(
-    private authService: AuthService,
-    private router: Router,
-    private confirmService: ConfirmService
+
   ) {
-    this.loadProfile();
-  }
-
-  ngOnInit() {
-    //this.getProfile();
-  }
-
-  loadProfile(): void {
-    this.isLoading.set(true);
-    this.errorMessage.set(undefined);
-
-    const cachedProfile = this.authService.getUserProfile();
-    if (cachedProfile) {
-      this.profile.set(cachedProfile);
-      this.isLoading.set(false);
-      return;
-    }
-
-    this.authService.getProfile().subscribe({
-      next: (profile) => {
-        this.profile.set(profile);
-        this.isLoading.set(false);
-      },
-      error: (err) => {
-        this.errorMessage.set(err.message || 'Failed to load profile');
-        this.isLoading.set(false);
-        //this.toastr.error(this.errorMessage(), 'Profile Error');
-      }
+    effect(() => {
+      console.log('Profile effect triggered');
+      console.log('Profile:', this.profile());
     });
   }
 
-  getProfile() {
-    if (!this.profile) {
-      this.authService.getProfile().subscribe({
-        next: (profile: ProfileDto) => this.profile.set(profile),
-        error: (err: Error) => this.errorMessage.set(err.message)
-      });
-    }
-
+  ngOnInit() {
+    this.isLoading.set(false);
   }
+
 
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -127,7 +100,7 @@ export class Profile implements OnInit {
     this.authService.updateProfilePicture(authData).subscribe({
       next: () => {
         this.errorMessage.set('');
-        this.authService.getProfile().subscribe((profile: ProfileDto) => this.profile.set(profile));
+        //this.authService.getProfile().subscribe((profile: ProfileDto) => this.profile.set(profile));
       },
       error: (err: Error) => this.errorMessage.set(err.message)
     });

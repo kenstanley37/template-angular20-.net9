@@ -6,17 +6,15 @@
   <mat-card class="error-card">
     <mat-card-content>
       <p class="error">{{ errorMessage() }}</p>
-      <button mat-raised-button color="primary" (click)="loadProfile()">
-        Retry
-      </button>
+      
     </mat-card-content>
   </mat-card>
   } @else if (profile()) {
   <mat-card class="profile-card">
     <mat-card-header>
       <mat-card-title-group>
-        <mat-card-title>{{ profile()?.name }}</mat-card-title>
-        <mat-card-subtitle>{{ profile()?.email }}</mat-card-subtitle>
+        <mat-card-title>{{ profile()!.name }}</mat-card-title>
+        <mat-card-subtitle>{{ profile()!.email }}</mat-card-subtitle>
       </mat-card-title-group>
       <div class="profile-avatar">
         <div
@@ -25,7 +23,7 @@
           title="Change Profile Picture"
         >
           <img
-            [src]="profile()?.profilePicture"
+            [src]="profile()!.profilePicture"
             alt="Profile Picture"
             class="profile-pic"
           />
@@ -45,7 +43,7 @@
     </mat-card-header>
     <mat-card-content>
       <div class="profile-details">
-        <p><strong>ID:</strong> {{ profile()?.id || 'N/A' }}</p>
+        <p><strong>ID:</strong> {{ profile()!.id || 'N/A' }}</p>
         
        
       </div>

@@ -1,5 +1,5 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Injectable, effect, inject, signal } from '@angular/core';
+import { Injectable, Signal, effect, inject, signal } from '@angular/core';
 import { catchError, map, Observable, of, tap, throwError } from 'rxjs';
 import {
   RegisterDto,
@@ -19,8 +19,15 @@ export class AuthService {
   private baseUrl = `${environment.apiUrl}`;
 
   // Signals for reactive state
-  readonly isAuthenticated = signal<boolean>(false);
-  readonly userProfile = signal<ProfileDto | null>(null);
+  //private isAuthenticated = signal<boolean>(false);
+  private isAuthenticatedSignal = signal<boolean>(false);
+  isAuthenticated = this.isAuthenticatedSignal.asReadonly();
+  
+  private userProfileSignal = signal<ProfileDto | null>(null);
+  userProfile = this.userProfileSignal.asReadonly();
+
+  //public readonly isAuthenticated$ = this.isAuthenticated.asReadonly();
+  //public readonly userProfile$: Signal<ProfileDto | null> = this.userProfile.asReadonly();
 
   constructor() {
     // Effect to persist profile changes or clear on logout
@@ -36,13 +43,18 @@ export class AuthService {
     // Initialize authentication state
     this.checkAuthStatus().subscribe({
       next: (isAuthenticated) => {
-        this.isAuthenticated.set(isAuthenticated);
+        this.isAuthenticatedSignal.set(isAuthenticated);
         if (isAuthenticated) {
           this.loadProfile();
         }
       },
-      error: () => this.isAuthenticated.set(false)
+      error: () => this.isAuthenticatedSignal.set(false)
     });
+  }
+
+
+  getIsAuthenticated(): Observable<boolean> {
+    return of(this.isAuthenticated());
   }
 
   // Register a new user
@@ -62,7 +74,7 @@ export class AuthService {
         return; // Return void
       }),
       tap(() => {
-        this.isAuthenticated.set(true);
+        this.isAuthenticatedSignal.set(true);
         this.loadProfile();
       }),
       catchError(this.handleError)
@@ -75,8 +87,8 @@ export class AuthService {
     return this.http.post<ApiResponse<ProfileDto>>(`${this.baseUrl}/auth/google-login`, dto, { withCredentials: true }).pipe(
       map(response => this.handleResponse(response)),
       tap(profile => {
-        this.isAuthenticated.set(true);
-        this.userProfile.set(profile);
+        this.isAuthenticatedSignal.set(true);
+        this.userProfileSignal.set(profile);
       }),
       catchError(this.handleError)
     );
@@ -91,7 +103,7 @@ export class AuthService {
         return; // Return void
       }),
       tap(() => {
-        this.isAuthenticated.set(true);
+        this.isAuthenticatedSignal.set(true);
         this.loadProfile();
       }),
       catchError(this.handleError)
@@ -107,6 +119,15 @@ export class AuthService {
     );
   }
 
+
+  setIsAuthenticated(isAuthenticated: boolean): void {
+    this.isAuthenticatedSignal.set(isAuthenticated);
+  }
+
+  setUserProfile(profile: ProfileDto): void {
+    this.userProfileSignal.set(profile);
+  }
+
   // Get user profile
   getProfile(): Observable<ProfileDto> {
     const cachedProfile = this.userProfile();
@@ -116,7 +137,7 @@ export class AuthService {
 
     return this.http.get<ApiResponse<ProfileDto>>(`${this.baseUrl}/user/profile`, { withCredentials: true }).pipe(
       map(response => this.handleResponse(response)),
-      tap(profile => this.userProfile.set(profile)),
+      tap(profile => this.userProfileSignal.set(profile)),
       catchError(this.handleError)
     );
   }
@@ -128,7 +149,7 @@ export class AuthService {
       tap(message => {
         const currentProfile = this.userProfile();
         if (currentProfile) {
-          this.userProfile.set({ ...currentProfile, profilePicture: dto.profilePicture || null });
+          this.userProfileSignal.set({ ...currentProfile, profilePicture: dto.profilePicture || null });
         }
       }),
       catchError(this.handleError)
@@ -143,8 +164,8 @@ export class AuthService {
         return; // Return void
       }),
       tap(() => {
-        this.isAuthenticated.set(false);
-        this.userProfile.set(null);
+        this.isAuthenticatedSignal.set(false);
+        this.userProfileSignal.set(null);
       }),
       catchError(this.handleError)
     );
@@ -157,7 +178,7 @@ export class AuthService {
         this.handleResponse(response); // Validate response
         return; // Return void
       }),
-      tap(() => this.isAuthenticated.set(true)),
+      tap(() => this.isAuthenticatedSignal.set(true)),
       catchError(this.handleError)
     );
   }
@@ -166,9 +187,9 @@ export class AuthService {
   checkAuthStatus(): Observable<boolean> {
     return this.http.get<ApiResponse<{ isAuthenticated: boolean }>>(`${this.baseUrl}/auth/check`, { withCredentials: true }).pipe(
       map(response => this.handleResponse(response).isAuthenticated),
-      tap(isAuthenticated => this.isAuthenticated.set(isAuthenticated)),
+      tap(isAuthenticated => this.isAuthenticatedSignal.set(isAuthenticated)),
       catchError(() => {
-        this.isAuthenticated.set(false);
+        this.isAuthenticatedSignal.set(false);
         return of(false);
       })
     );
@@ -179,16 +200,13 @@ export class AuthService {
     return this.isAuthenticated();
   }
 
-  getUserProfile(): ProfileDto | null {
-    return this.userProfile();
-  }
 
   // Load profile from API or local storage
   private loadProfile(): void {
     const storedProfile = localStorage.getItem('userProfile');
     if (storedProfile) {
       try {
-        this.userProfile.set(JSON.parse(storedProfile));
+        this.userProfileSignal.set(JSON.parse(storedProfile));
       } catch (e) {
         console.error('Failed to parse stored profile:', e);
       }
@@ -204,6 +222,8 @@ export class AuthService {
     if (!response.success) {
       throw new Error(response.message || 'API request failed');
     }
+    this.getProfile(); // Ensure profile is loaded after any API call
+    // Optionally log the response for debugging
     console.log('API response:', response);
     return response.data as T;
   }

@@ -45,6 +45,8 @@ export class GoogleAuthService {
         console.log('Email:', user.email);
         console.log('Profile Picture:', user.profilePicture);
         this.router.navigate(['/profile']);
+        this.authService.setUserProfile(user);
+        this.authService.setIsAuthenticated(true);  
         return user;
       }),
       catchError((error) => {

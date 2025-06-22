@@ -7,17 +7,17 @@
   <button routerLink="/" mat-button>Home</button>
   <span class="spacer"></span>
 
-  @if (isAuthenticated) {
+  @if (isAuthenticated() && profile()) {
   <div class="user-info">
     <button mat-icon-button [matMenuTriggerFor]="userMenu">
       <img
-        [src]="profile?.profilePicture || 'assets/default-profile.webp'"
+        [src]="profile()!.profilePicture || 'assets/default-profile.webp'"
         alt="Profile Picture"
         class="profile-pic"
       />
     </button>
     <mat-menu #userMenu="matMenu" class="user-menu">
-      <div class="user-name">Name: {{ profile?.name }}</div>
+      <div class="user-name">Name: {{ profile()!.name }}</div>
       <button mat-menu-item routerLink="/profile">Profile</button>
       <button mat-menu-item (click)="logout()">Logout</button>
     </mat-menu>

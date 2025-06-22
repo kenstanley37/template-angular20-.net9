@@ -1,4 +1,4 @@
-import { Component, EventEmitter, inject, Input, Output, signal } from '@angular/core';
+import { Component, EventEmitter, inject, Input, OnInit, Output, Signal, signal } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
@@ -23,42 +23,27 @@ import { ProfileDto } from '../../../_models/user-model';
   templateUrl: './toolbar.html',
   styleUrl: './toolbar.scss'
 })
-export class Toolbar {
+export class Toolbar implements OnInit {
   @Input() pinned = false;
   @Output() toggle = new EventEmitter<boolean>();
 
   private authService = inject(AuthService);
   private router = inject(Router);
-  profile: ProfileDto | null = null;
+
+
+  // Use Signal for reactive state management
   isSidenavOpen = signal<boolean>(false);
   hasShadow = signal(false);
-  
 
-  // Access signal values directly
-  get isAuthenticated() {
-    return this.authService.isAuthenticated();
-  }
-
-  get getProfile() {
-    return this.authService.userProfile();
-  }
-
-  get getIsSidenavOpen() {
-    return this.isSidenavOpen();
-  }
+  isAuthenticated = this.authService.isAuthenticated;
+  profile = this.authService.userProfile;
 
   constructor() {
-    // Fetch profile only if not already set
-    if (!this.profile) {
-      this.authService.getProfile().subscribe({
-        next: (profile) => {
-          this.profile = profile
-          //console.log('Profile fetched:', profile);
-          //console.log('isAuthenticated:', this.isAuthenticated);
-        },
-        error: (err) => console.error('Error fetching profile:', err)
-      });
-    }
+    
+  }
+
+  ngOnInit(): void {
+    console.log('authenticated:', this.isAuthenticated);
   }
 
   onScroll(event: Event) {

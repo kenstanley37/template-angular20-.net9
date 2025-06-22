@@ -26,7 +26,7 @@ export const appConfig: ApplicationConfig = {
 
       try {
         const config = await firstValueFrom(configService.loadConfig());
-        const userProfile = await firstValueFrom(authService.getProfile());
+        //const userProfile = await firstValueFrom(authService.getProfile());
         configService.setConfig(config);
       } catch (error) {
         console.error('Initialization error:', error);

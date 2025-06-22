@@ -43,7 +43,7 @@ export class App {
   isHovering = false;
   isCollapsed = computed(() => !this.isSidenavOpen());
   isAuthenticated = signal(false);
-  profile = signal<ProfileDto | null>(null);
+  //profile = signal<ProfileDto | null>(null);
   isMobile = signal(false);
 
   hideFooter = signal(false);
@@ -86,16 +86,16 @@ export class App {
         if (isAuthenticated) {
           this.authService.getProfile().subscribe({
             next: (profile: ProfileDto) => {
-              this.profile.set(profile);
+              //this.profile.set(profile);
             },
             error: (err) => {
               console.error('Error fetching profile:', err);
-              this.profile.set(null);
+              //this.profile.set(null);
             }
           });
         } else {
           this.isAuthenticated.set(false);
-          this.profile.set(null);
+          //this.profile.set(null);
         }
       }
     });
@@ -109,7 +109,7 @@ export class App {
     this.authService.logout().subscribe({
       next: () => {
         this.isAuthenticated.set(false);
-        this.profile.set(null);
+        //this.profile.set(null);
       }
     });
   }
@@ -121,7 +121,9 @@ export class App {
       next: () => {
         console.log('Token refreshed successfully')
         this.authService.getProfile().subscribe({
-          next: (profile: ProfileDto) => this.profile.set(profile),
+          next: (profile: ProfileDto) => {
+            //this.profile.set(profile)
+            },
         });
       },
       error: (err) => {
