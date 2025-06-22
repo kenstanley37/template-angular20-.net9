@@ -12,12 +12,14 @@ export interface LoginDto {
   email: string;
   password: string;
   stayLoggedIn: boolean;
+  deviceId: string; // Add this field
 }
 
 // SocialLoginDto is correct (endpoint removed as per updated service)
 export interface SocialLoginDto {
   token: string;
   stayLoggedIn?: boolean; // Made optional to align with Google login (no stayLoggedIn)
+  deviceId: string; // Add this field
 }
 
 // ProfileDto updated to include optional 'id'

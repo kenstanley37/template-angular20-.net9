@@ -10,12 +10,14 @@ import {
   ApiResponse
 } from '../_models/user-model';
 import { environment } from '../../environments/environment';
+import { DeviceIdService } from './device-id-service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
   private http = inject(HttpClient);
+  private deviceIdService = inject(DeviceIdService);
   private baseUrl = `${environment.apiUrl}`;
 
   // Signals for reactive state
@@ -68,6 +70,10 @@ export class AuthService {
 
   // Login a user
   login(dto: LoginDto): Observable<void> {
+    const deviceId = this.deviceIdService.getDeviceId();
+
+    dto.deviceId = deviceId; // Attach device ID to the login request
+
     return this.http.post<ApiResponse<null>>(`${this.baseUrl}/auth/login`, dto, { withCredentials: true }).pipe(
       map(response => {
         this.handleResponse(response); // Validate response
@@ -83,7 +89,12 @@ export class AuthService {
 
   // Google login
   googleLogin(token: string): Observable<ProfileDto> {
-    const dto: SocialLoginDto = { token };
+    const deviceId = this.deviceIdService.getDeviceId();
+    const dto: SocialLoginDto = { token, stayLoggedIn: true, deviceId }; // Attach device ID to the social login request
+  
+    // Note: stayLoggedIn is not used in the backend for Google login, but included for consistency
+    // If you want to allow users to choose whether to stay logged in, you can modify the method signature to accept it as a parameter.
+
     return this.http.post<ApiResponse<ProfileDto>>(`${this.baseUrl}/auth/google-login`, dto, { withCredentials: true }).pipe(
       map(response => this.handleResponse(response)),
       tap(profile => {
@@ -96,7 +107,8 @@ export class AuthService {
 
   // Facebook login
   facebookLogin(token: string, stayLoggedIn: boolean): Observable<void> {
-    const dto: SocialLoginDto = { token, stayLoggedIn };
+    const deviceId = this.deviceIdService.getDeviceId();
+    const dto: SocialLoginDto = { token, stayLoggedIn, deviceId }; // Attach device ID to the social login request
     return this.http.post<ApiResponse<null>>(`${this.baseUrl}/auth/facebook-login`, dto, { withCredentials: true }).pipe(
       map(response => {
         this.handleResponse(response); // Validate response
@@ -173,7 +185,9 @@ export class AuthService {
 
   // Refresh token
   refreshToken(): Observable<void> {
-    return this.http.post<ApiResponse<null>>(`${this.baseUrl}/auth/refresh`, {}, { withCredentials: true }).pipe(
+    const deviceId = this.deviceIdService.getDeviceId();
+
+    return this.http.post<ApiResponse<null>>(`${this.baseUrl}/auth/refresh`, {}, { withCredentials: true, headers: { 'X-Device-Id': deviceId } }).pipe(
       map(response => {
         this.handleResponse(response); // Validate response
         return; // Return void

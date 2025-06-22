@@ -1,83 +1,45 @@
 <div class="profile-container">
   @if (isLoading()) {
-  <app-skeleton-card></app-skeleton-card>
-
+    <app-skeleton-card></app-skeleton-card>
   } @else if (errorMessage()) {
-  <mat-card class="error-card">
-    <mat-card-content>
-      <p class="error">{{ errorMessage() }}</p>
-      
-    </mat-card-content>
-  </mat-card>
+    <mat-card class="error-card">
+      <mat-card-content>
+        <p class="error">{{ errorMessage() }}</p>
+      </mat-card-content>
+    </mat-card>
   } @else if (profile()) {
-  <mat-card class="profile-card">
-    <mat-card-header>
-      <mat-card-title-group>
-        <mat-card-title>{{ profile()!.name }}</mat-card-title>
-        <mat-card-subtitle>{{ profile()!.email }}</mat-card-subtitle>
-      </mat-card-title-group>
-      <div class="profile-avatar">
-        <div
-          class="avatar-wrapper"
-          (click)="fileInput.click()"
-          title="Change Profile Picture"
-        >
-          <img
-            [src]="profile()!.profilePicture"
-            alt="Profile Picture"
-            class="profile-pic"
-          />
-          <div class="camera-icon">
-            <mat-icon>photo_camera</mat-icon>
+    <mat-card class="profile-card">
+      <mat-card-header>
+        <div class="avatar-container">
+          <div class="avatar-wrapper" (click)="fileInput.click()" title="Change Profile Picture">
+            <img [src]="profile()!.profilePicture" alt="Profile Picture" class="profile-pic" />
+            <div class="camera-icon"><mat-icon>photo_camera</mat-icon></div>
+          </div>
+          <div class="text-info">
+            <h2>{{ profile()!.name }}</h2>
+            <p>{{ profile()!.email }}</p>
           </div>
         </div>
-      </div>
+      </mat-card-header>
 
-      <input
-        type="file"
-        accept="image/*"
-        #fileInput
-        (change)="onFileSelected($event)"
-        style="display: none"
-      />
-    </mat-card-header>
-    <mat-card-content>
-      <div class="profile-details">
-        <p><strong>ID:</strong> {{ profile()!.id || 'N/A' }}</p>
-        
-       
-      </div>
-    </mat-card-content>
-    <mat-card-actions>
-      <div class="upload-section">
-          <input
-            type="file"
-            accept="image/*"
-            #fileInput
-            (change)="onFileSelected($event)"
-            style="display: none"
-          />
-          <button
-            mat-raised-button
-            color="accent"
-            (click)="fileInput.click()"
-            [disabled]="isLoading()"
-          >
-            <mat-icon>upload</mat-icon>
-            Update Profile Picture
-          </button>
+      <mat-card-content>
+        <div class="profile-details">
+          <p><strong>ID:</strong> {{ profile()!.id || 'N/A' }}</p>
         </div>
-       <div class="account-actions">
-          <button
-            mat-raised-button
-            color="warn"
-            (click)="confirmDeleteAccount()"
-          >
-            <mat-icon>delete</mat-icon>
-            Delete Account
-          </button>
-        </div>
-    </mat-card-actions>
-  </mat-card>
+      </mat-card-content>
+
+      <mat-card-actions>
+        <button mat-raised-button color="accent" (click)="fileInput.click()" [disabled]="isLoading()">
+          <mat-icon>upload</mat-icon>
+          Update Picture
+        </button>
+        <button mat-raised-button color="warn" (click)="confirmDeleteAccount()">
+          <mat-icon>delete</mat-icon>
+          Delete Account
+        </button>
+      </mat-card-actions>
+
+      <input type="file" accept="image/*" #fileInput (change)="onFileSelected($event)" hidden />
+    </mat-card>
   }
 </div>
