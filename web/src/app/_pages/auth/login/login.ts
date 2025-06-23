@@ -9,6 +9,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { Router, RouterLink, RouterModule } from '@angular/router';
 import { LoginDto, SocialLoginDto } from '../../../_models/user-model';
 import { GoogleAuthService } from '../../../_services/google-auth-service';
+import { UserService } from '../../../_services/user-service';
 
 
 @Component({
@@ -33,6 +34,7 @@ export class Login implements OnInit {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private router = inject(Router);
+  private userService = inject(UserService);
   loginForm: FormGroup;
   errorMessage = '';
 
@@ -55,7 +57,17 @@ export class Login implements OnInit {
 
     const loginDto: LoginDto = this.loginForm.value;
     this.authService.login(loginDto).subscribe({
-      next: () => this.router.navigate(['/']),
+      next: () => {
+        this.userService.getProfile().subscribe({
+          next: (profile) => {
+            this.userService.setProfile(profile);
+            this.router.navigate(['/']);
+          },
+          error: (err: Error) => {
+            this.errorMessage = err.message;
+          }
+        });
+      },
       error: (err: Error) => this.errorMessage = err.message
     });
   }

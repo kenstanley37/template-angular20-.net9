@@ -16,6 +16,7 @@ import { ProfileDto } from './_models/user-model';
 import { Sidenav } from "./_components/layout/sidenav/sidenav";
 import { Footer } from "./_components/layout/footer/footer";
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
+import { UserService } from './_services/user-service';
 
 
 @Component({
@@ -39,19 +40,24 @@ import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 export class App {
   protected title = 'web';
   @ViewChild(MatSidenav) sidenav!: MatSidenav;
+
+  private router = inject(Router);
+  private authService = inject(AuthService);
+  private userService = inject(UserService);
+
   isSidenavOpen = signal(true);
   isHovering = false;
   isCollapsed = computed(() => !this.isSidenavOpen());
-  isAuthenticated = signal(false);
-  //profile = signal<ProfileDto | null>(null);
+  isAuthenticated = this.authService.isAuthenticated;
+  profile = this.userService.userProfile;
   isMobile = signal(false);
 
   hideFooter = signal(false);
   lastScrollTop = 0;
 
-  private router = inject(Router);
 
-  constructor(private authService: AuthService, breakpointObserver: BreakpointObserver) {
+
+  constructor(breakpointObserver: BreakpointObserver) {
     // Initialization logic can go here if needed
 
     effect(() => {
@@ -74,29 +80,25 @@ export class App {
   }
 
   onSidenavHover(state: boolean) {
-  this.isHovering = state;
-}
+    this.isHovering = state;
+  }
 
 
   checkAuthStatus() {
     this.authService.checkAuthStatus().subscribe({
       next: (isAuthenticated: boolean) => {
-        //console.log('Authentication status:', isAuthenticated);
-        this.isAuthenticated.set(isAuthenticated);
+
         if (isAuthenticated) {
-          this.authService.getProfile().subscribe({
+          this.userService.getProfile().subscribe({
             next: (profile: ProfileDto) => {
-              //this.profile.set(profile);
+              this.userService.setProfile(profile);
             },
             error: (err) => {
               console.error('Error fetching profile:', err);
-              //this.profile.set(null);
+              this.userService.setProfile(null);
             }
           });
-        } else {
-          this.isAuthenticated.set(false);
-          //this.profile.set(null);
-        }
+        } 
       }
     });
   }
@@ -106,12 +108,7 @@ export class App {
   }
 
   logout() {
-    this.authService.logout().subscribe({
-      next: () => {
-        this.isAuthenticated.set(false);
-        //this.profile.set(null);
-      }
-    });
+    this.authService.logout().subscribe();
   }
 
   refreshToken() {
@@ -120,10 +117,10 @@ export class App {
     this.authService.refreshToken().subscribe({
       next: () => {
         console.log('Token refreshed successfully')
-        this.authService.getProfile().subscribe({
+        this.userService.getProfile().subscribe({
           next: (profile: ProfileDto) => {
-            //this.profile.set(profile)
-            },
+            this.userService.setProfile(profile);
+          },
         });
       },
       error: (err) => {

@@ -8,6 +8,7 @@ import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../_services/auth-service';
 import { Profile } from '../../../_pages/user/profile/profile';
 import { ProfileDto } from '../../../_models/user-model';
+import { UserService } from '../../../_services/user-service';
 
 @Component({
   selector: 'app-toolbar',
@@ -28,6 +29,7 @@ export class Toolbar implements OnInit {
   @Output() toggle = new EventEmitter<boolean>();
 
   private authService = inject(AuthService);
+  private userService = inject(UserService);
   private router = inject(Router);
 
 
@@ -36,7 +38,7 @@ export class Toolbar implements OnInit {
   hasShadow = signal(false);
 
   isAuthenticated = this.authService.isAuthenticated;
-  profile = this.authService.userProfile;
+  profile = this.userService.userProfile;
 
   constructor() {
     

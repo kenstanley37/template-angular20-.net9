@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { ConfigService } from './config-service';
 import { environment } from '../../environments/environment.development';
 import { HttpClient } from '@angular/common/http';
@@ -6,6 +6,7 @@ import { ProfileDto } from '../_models/user-model';
 import { AuthService } from './auth-service';
 import { catchError, map, of } from 'rxjs';
 import { Router } from '@angular/router';
+import { UserService } from './user-service';
 
 declare global {
   interface Window {
@@ -20,8 +21,13 @@ declare const google: any;
 })
 export class GoogleAuthService {
   private client: any;
+  private userService = inject(UserService);
+  private configService = inject(ConfigService);
+  private httpClient = inject(HttpClient);
+  private authService = inject(AuthService);
+  private router = inject(Router);
 
-  constructor(private configService: ConfigService, private httpClient: HttpClient, private authService: AuthService, private router: Router) {
+  constructor() {
     const interval = setInterval(() => {
       if ((window as any).google && google.accounts) {
         clearInterval(interval);
@@ -35,19 +41,22 @@ export class GoogleAuthService {
       client_id: this.configService.getConfig().googleClientId,
       callback: this.handleCredentialResponse.bind(this)
     });
+
+    google.accounts.id.renderButton(
+      document.getElementById("google-button"),
+      { theme: "outline", size: "large" }  // customization attributes
+    );
   }
 
   private handleCredentialResponse(response: any) {
     console.log('Credential:', response.credential);
     this.authService.googleLogin(response.credential).pipe(
-      map((user: ProfileDto) => {
-        console.log('Name:', user.name);
-        console.log('Email:', user.email);
-        console.log('Profile Picture:', user.profilePicture);
+      map((profile: ProfileDto) => {
+        this.userService.setProfile(profile);
+        this.authService.setIsAuthenticated(true);
         this.router.navigate(['/profile']);
-        this.authService.setUserProfile(user);
-        this.authService.setIsAuthenticated(true);  
-        return user;
+        
+        return profile;
       }),
       catchError((error) => {
         console.error('Error:', error);

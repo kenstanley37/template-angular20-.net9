@@ -25,6 +25,9 @@ export const appConfig: ApplicationConfig = {
       const router = inject(Router);
 
       try {
+        // Load configuration and user profile
+        // Note: If you need to use the authService to get user profile, uncomment the following lines
+        // const userProfile = await firstValueFrom(authService.getProfile());
         const config = await firstValueFrom(configService.loadConfig());
         //const userProfile = await firstValueFrom(authService.getProfile());
         configService.setConfig(config);

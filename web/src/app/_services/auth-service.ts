@@ -11,6 +11,7 @@ import {
 } from '../_models/user-model';
 import { environment } from '../../environments/environment';
 import { DeviceIdService } from './device-id-service';
+import { UserService } from './user-service';
 
 @Injectable({
   providedIn: 'root'
@@ -18,37 +19,22 @@ import { DeviceIdService } from './device-id-service';
 export class AuthService {
   private http = inject(HttpClient);
   private deviceIdService = inject(DeviceIdService);
+  private userService = inject(UserService);
   private baseUrl = `${environment.apiUrl}`;
 
   // Signals for reactive state
   //private isAuthenticated = signal<boolean>(false);
   private isAuthenticatedSignal = signal<boolean>(false);
   isAuthenticated = this.isAuthenticatedSignal.asReadonly();
-  
-  private userProfileSignal = signal<ProfileDto | null>(null);
-  userProfile = this.userProfileSignal.asReadonly();
 
   //public readonly isAuthenticated$ = this.isAuthenticated.asReadonly();
   //public readonly userProfile$: Signal<ProfileDto | null> = this.userProfile.asReadonly();
 
   constructor() {
-    // Effect to persist profile changes or clear on logout
-    effect(() => {
-      const profile = this.userProfile();
-      if (profile) {
-        localStorage.setItem('userProfile', JSON.stringify(profile));
-      } else {
-        localStorage.removeItem('userProfile');
-      }
-    });
-
     // Initialize authentication state
     this.checkAuthStatus().subscribe({
       next: (isAuthenticated) => {
         this.isAuthenticatedSignal.set(isAuthenticated);
-        if (isAuthenticated) {
-          this.loadProfile();
-        }
       },
       error: () => this.isAuthenticatedSignal.set(false)
     });
@@ -69,19 +55,16 @@ export class AuthService {
   }
 
   // Login a user
-  login(dto: LoginDto): Observable<void> {
+  login(dto: LoginDto): Observable<ProfileDto> {
     const deviceId = this.deviceIdService.getDeviceId();
 
     dto.deviceId = deviceId; // Attach device ID to the login request
 
-    return this.http.post<ApiResponse<null>>(`${this.baseUrl}/auth/login`, dto, { withCredentials: true }).pipe(
-      map(response => {
-        this.handleResponse(response); // Validate response
-        return; // Return void
-      }),
-      tap(() => {
+    return this.http.post<ApiResponse<ProfileDto>>(`${this.baseUrl}/auth/login`, dto, { withCredentials: true }).pipe(
+      map(response => this.handleResponse(response)),
+      tap(profile => {
         this.isAuthenticatedSignal.set(true);
-        this.loadProfile();
+        this.userService.setProfile(profile);
       }),
       catchError(this.handleError)
     );
@@ -98,8 +81,8 @@ export class AuthService {
     return this.http.post<ApiResponse<ProfileDto>>(`${this.baseUrl}/auth/google-login`, dto, { withCredentials: true }).pipe(
       map(response => this.handleResponse(response)),
       tap(profile => {
+        this.userService.setProfile(profile); // Set the user profile in UserService
         this.isAuthenticatedSignal.set(true);
-        this.userProfileSignal.set(profile);
       }),
       catchError(this.handleError)
     );
@@ -116,7 +99,6 @@ export class AuthService {
       }),
       tap(() => {
         this.isAuthenticatedSignal.set(true);
-        this.loadProfile();
       }),
       catchError(this.handleError)
     );
@@ -136,38 +118,6 @@ export class AuthService {
     this.isAuthenticatedSignal.set(isAuthenticated);
   }
 
-  setUserProfile(profile: ProfileDto): void {
-    this.userProfileSignal.set(profile);
-  }
-
-  // Get user profile
-  getProfile(): Observable<ProfileDto> {
-    const cachedProfile = this.userProfile();
-    if (cachedProfile) {
-      return of(cachedProfile);
-    }
-
-    return this.http.get<ApiResponse<ProfileDto>>(`${this.baseUrl}/user/profile`, { withCredentials: true }).pipe(
-      map(response => this.handleResponse(response)),
-      tap(profile => this.userProfileSignal.set(profile)),
-      catchError(this.handleError)
-    );
-  }
-
-  // Update profile picture
-  updateProfilePicture(dto: UpdateProfilePictureDto): Observable<string> {
-    return this.http.post<ApiResponse<string>>(`${this.baseUrl}/user/profile/picture`, dto, { withCredentials: true }).pipe(
-      map(response => this.handleResponse(response)),
-      tap(message => {
-        const currentProfile = this.userProfile();
-        if (currentProfile) {
-          this.userProfileSignal.set({ ...currentProfile, profilePicture: dto.profilePicture || null });
-        }
-      }),
-      catchError(this.handleError)
-    );
-  }
-
   // Logout
   logout(): Observable<void> {
     return this.http.post<ApiResponse<null>>(`${this.baseUrl}/auth/logout`, {}, { withCredentials: true }).pipe(
@@ -177,7 +127,6 @@ export class AuthService {
       }),
       tap(() => {
         this.isAuthenticatedSignal.set(false);
-        this.userProfileSignal.set(null);
       }),
       catchError(this.handleError)
     );
@@ -209,36 +158,13 @@ export class AuthService {
     );
   }
 
-  // Getters for signals
-  isLoggedIn(): boolean {
-    return this.isAuthenticated();
-  }
-
-
-  // Load profile from API or local storage
-  private loadProfile(): void {
-    const storedProfile = localStorage.getItem('userProfile');
-    if (storedProfile) {
-      try {
-        this.userProfileSignal.set(JSON.parse(storedProfile));
-      } catch (e) {
-        console.error('Failed to parse stored profile:', e);
-      }
-    } else {
-      this.getProfile().subscribe({
-        error: (err) => console.error('Failed to load profile:', err.message)
-      });
-    }
-  }
-
   // Handle API response
   private handleResponse<T>(response: ApiResponse<T>): T {
     if (!response.success) {
       throw new Error(response.message || 'API request failed');
     }
-    this.getProfile(); // Ensure profile is loaded after any API call
     // Optionally log the response for debugging
-    console.log('API response:', response);
+    // console.log('API response:', response);
     return response.data as T;
   }
 

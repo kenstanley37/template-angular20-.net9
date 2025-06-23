@@ -27,7 +27,11 @@ export interface ProfileDto {
   id?: number; // Added to match backend
   name: string;
   email: string;
+  address: string;
+  phoneNumber: string;
   profilePicture?: string | null; // Explicitly allow null
+  role: string;
+  bio: string;
 }
 
 // UpdateProfilePictureDto is correct

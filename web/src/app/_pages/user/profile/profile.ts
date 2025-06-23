@@ -12,6 +12,7 @@ import { MatIconModule } from '@angular/material/icon';
 //import { UserProfileCard } from '../../../_components/user/user-profile-card/user-profile-card';
 import { SkeletonCard } from "../../../_components/skeleton-card/skeleton-card";
 import { ConfirmService } from '../../../_services/confirm-service';
+import { UserService } from '../../../_services/user-service';
 
 
 @Component({
@@ -22,12 +23,11 @@ import { ConfirmService } from '../../../_services/confirm-service';
 })
 export class Profile implements OnInit {
 
-  private authService = inject(AuthService);
   private confirmService = inject(ConfirmService);
-  private router = inject(Router);
+  private userService = inject(UserService);
 
-  profile = this.authService.userProfile; // Use signal for reactive state
-  //profile = signal<ProfileDto | null>(null);
+  profile = this.userService.userProfile; // Use signal for reactive state
+
   isLoading = signal<boolean>(true);
   errorMessage = signal<string | undefined>(undefined);
   selectedFile: File | null = null;
@@ -42,6 +42,12 @@ export class Profile implements OnInit {
   }
 
   ngOnInit() {
+    /*
+    this.isLoading.set(true);
+    if(!this.profile()) {
+      this.userService.getProfile().subscribe();
+    }
+      */
     this.isLoading.set(false);
   }
 
@@ -74,7 +80,7 @@ export class Profile implements OnInit {
       const base64String = (reader.result as string).split(',')[1]; // Remove data:image/...;base64,
       const dto: UpdateProfilePictureDto = { profilePicture: base64String };
 
-      this.authService.updateProfilePicture(dto).subscribe({
+      this.userService.updateProfilePicture(dto).subscribe({
         next: (message) => {
           this.isLoading.set(false);
           //this.toastr.success('Profile picture updated', 'Success');
@@ -97,7 +103,7 @@ export class Profile implements OnInit {
 
   clearProfilePicture() {
     const authData: UpdateProfilePictureDto = { profilePicture: undefined };
-    this.authService.updateProfilePicture(authData).subscribe({
+    this.userService.updateProfilePicture(authData).subscribe({
       next: () => {
         this.errorMessage.set('');
         //this.authService.getProfile().subscribe((profile: ProfileDto) => this.profile.set(profile));
