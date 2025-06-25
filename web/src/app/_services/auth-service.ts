@@ -23,12 +23,8 @@ export class AuthService {
   private baseUrl = `${environment.apiUrl}`;
 
   // Signals for reactive state
-  //private isAuthenticated = signal<boolean>(false);
   private isAuthenticatedSignal = signal<boolean>(false);
-  isAuthenticated = this.isAuthenticatedSignal.asReadonly();
-
-  //public readonly isAuthenticated$ = this.isAuthenticated.asReadonly();
-  //public readonly userProfile$: Signal<ProfileDto | null> = this.userProfile.asReadonly();
+  public isAuthenticated = this.isAuthenticatedSignal.asReadonly();
 
   constructor() {
     // Initialize authentication state
@@ -39,7 +35,6 @@ export class AuthService {
       error: () => this.isAuthenticatedSignal.set(false)
     });
   }
-
 
   getIsAuthenticated(): Observable<boolean> {
     return of(this.isAuthenticated());
@@ -65,6 +60,22 @@ export class AuthService {
       tap(profile => {
         this.isAuthenticatedSignal.set(true);
         this.userService.setProfile(profile);
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+    // Logout
+  logout(): Observable<void> {
+    return this.http.post<ApiResponse<null>>(`${this.baseUrl}/auth/logout`, {}, { withCredentials: true }).pipe(
+      map(response => {
+        this.handleResponse(response); // Validate response
+        return; // Return void
+      }),
+      tap(() => {
+        this.isAuthenticatedSignal.set(false);
+        localStorage.removeItem('userProfile'); // Clear user profile from local storage
+        this.userService.removeProfile(); // Clear profile in UserService
       }),
       catchError(this.handleError)
     );
@@ -118,19 +129,7 @@ export class AuthService {
     this.isAuthenticatedSignal.set(isAuthenticated);
   }
 
-  // Logout
-  logout(): Observable<void> {
-    return this.http.post<ApiResponse<null>>(`${this.baseUrl}/auth/logout`, {}, { withCredentials: true }).pipe(
-      map(response => {
-        this.handleResponse(response); // Validate response
-        return; // Return void
-      }),
-      tap(() => {
-        this.isAuthenticatedSignal.set(false);
-      }),
-      catchError(this.handleError)
-    );
-  }
+
 
   // Refresh token
   refreshToken(): Observable<void> {

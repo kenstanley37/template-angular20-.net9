@@ -7,7 +7,8 @@
         "googleusercontent",
         "otabj",
         "sjhuf",
-        "toastr"
+        "toastr",
+        "tobottom"
     ],
     "vscodeGrok.apiKey": "xai-UXIBTkgUGf1kqUroAwBaPEkZiwEaJIysHDgnbwUGZ4BblPEInFqHDKhA0e5x6cAliDxdKFbF3uYQC7u6",
     "vscodeGrok.model": "grok-3",

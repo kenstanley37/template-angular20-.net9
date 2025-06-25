@@ -40,6 +40,8 @@ export class UserService {
 
     removeProfile(): void {
       this.userProfileSignal.set(null);
+      localStorage.removeItem(this.localProfile);
+      
     }
 
     setProfile(profile: ProfileDto | null): void {

@@ -28,17 +28,31 @@
     <span class="label" [class.hidden]="collapsed">Profile</span>
   </a>
 
-  <a
-    mat-list-item
-    class="menu-item"
-    routerLink="/settings"
-    matTooltip="Settings"
-    [matTooltipDisabled]="!collapsed"
-    #rla="routerLinkActive"
-    [activated]="rla.isActive"
-    routerLinkActive="selected-menu-item"
-  >
-    <mat-icon>settings</mat-icon>
-    <span class="label" [class.hidden]="collapsed">Settings</span>
-  </a>
+  <div class="tobottom">
+    <a
+      mat-list-item
+      class="menu-item"
+      routerLink="/settings"
+      matTooltip="Settings"
+      [matTooltipDisabled]="!collapsed"
+      #rla="routerLinkActive"
+      [activated]="rla.isActive"
+      routerLinkActive="selected-menu-item"
+    >
+      <mat-icon>settings</mat-icon>
+      <span class="label" [class.hidden]="collapsed">Settings</span>
+    </a>
+    <a
+      mat-list-item
+      class="menu-item"
+      routerLink="/settings"
+      matTooltip="Settings"
+      [matTooltipDisabled]="!collapsed"
+      #rla="routerLinkActive"
+      [activated]="rla.isActive"
+      routerLinkActive="selected-menu-item"
+    >
+      <mat-icon>settings</mat-icon> Test
+    </a>
+  </div>
 </mat-nav-list>

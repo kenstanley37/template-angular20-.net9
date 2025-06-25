@@ -42,13 +42,21 @@ export class Profile implements OnInit {
   }
 
   ngOnInit() {
-    /*
     this.isLoading.set(true);
-    if(!this.profile()) {
-      this.userService.getProfile().subscribe();
+    if(this.profile() === undefined  || this.profile() === null) {
+      this.userService.getProfile().subscribe({
+        next: () => {
+          this.isLoading.set(false);
+        },
+        error: (err: Error) => {
+          this.errorMessage.set(err.message || 'Failed to load profile');
+          this.isLoading.set(false);
+        }
+      });
     }
-      */
-    this.isLoading.set(false);
+    else {
+      this.isLoading.set(false);
+    }
   }
 
 

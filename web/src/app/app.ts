@@ -1,8 +1,6 @@
 import { Component, ViewChild, signal, inject, effect, computed } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
 import { Toolbar } from './_components/layout/toolbar/toolbar';
 import { AuthService } from './_services/auth-service';
-import { catchError, switchMap, throwError } from 'rxjs';
 import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
 import { MatIconModule } from '@angular/material/icon';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -55,8 +53,6 @@ export class App {
   hideFooter = signal(false);
   lastScrollTop = 0;
 
-
-
   constructor(breakpointObserver: BreakpointObserver) {
     // Initialization logic can go here if needed
 
@@ -72,7 +68,7 @@ export class App {
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
     ).subscribe(() => {
-      this.isSidenavOpen.set(false);
+      //this.isSidenavOpen.set(false);
     });
 
     // Check authentication status on app initialization
@@ -82,7 +78,6 @@ export class App {
   onSidenavHover(state: boolean) {
     this.isHovering = state;
   }
-
 
   checkAuthStatus() {
     this.authService.checkAuthStatus().subscribe({

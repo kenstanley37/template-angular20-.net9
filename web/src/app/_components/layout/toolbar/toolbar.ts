@@ -32,7 +32,6 @@ export class Toolbar implements OnInit {
   private userService = inject(UserService);
   private router = inject(Router);
 
-
   // Use Signal for reactive state management
   isSidenavOpen = signal<boolean>(false);
   hasShadow = signal(false);
@@ -45,7 +44,10 @@ export class Toolbar implements OnInit {
   }
 
   ngOnInit(): void {
-    console.log('authenticated:', this.isAuthenticated);
+    var storedSidenavState = localStorage.getItem('sidenavOpen');
+    if (storedSidenavState) {
+      this.isSidenavOpen.set(JSON.parse(storedSidenavState));
+    }
   }
 
   onScroll(event: Event) {
@@ -55,10 +57,9 @@ export class Toolbar implements OnInit {
 
   toggleSidenav() {
     // Toggle the sidenav state
-    //console.log('Toggling sidenav. Current state:', this.isSidenavOpen());
     this.isSidenavOpen.set(!this.isSidenavOpen());
     this.toggle.emit(this.isSidenavOpen());
-    //console.log('New sidenav state:', this.isSidenavOpen());
+    localStorage.setItem('sidenavOpen', JSON.stringify(this.isSidenavOpen()));
   }
 
   logout() {
