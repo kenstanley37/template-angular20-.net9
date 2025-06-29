@@ -1,22 +1,20 @@
 @use '@angular/material' as mat;
+@use './styles/dark-theme.scss';
+@use './styles/light-theme.scss';
 
-$theme: mat.define-theme((
-  color: (
-    theme-type: light,
-    primary: mat.$azure-palette,
-    tertiary: mat.$blue-palette,
-  ),
-  density: (
-    scale: 0,
-  ),
-));
-
-html {
-  @include mat.all-component-themes($theme);
-}
 
 html, body {
   height: 100%;
   margin: 0;
   font-family: Roboto, 'Helvetica Neue', sans-serif;
+
+}
+
+::ng-deep .fullscreen-dialog .mat-dialog-container {
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  max-width: 100vw;
+  max-height: 100vh;
+  overflow: hidden;
 }

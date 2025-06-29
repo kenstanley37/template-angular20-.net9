@@ -1,0 +1,19 @@
+@use "@angular/material" as mat;
+
+html {
+  .light-theme {
+    color-scheme: light;
+    @include mat.theme(
+      (
+        color: (
+          primary: mat.$violet-palette,
+          tertiary: mat.$orange-palette,
+        ),
+        density: 0,
+        typography: Roboto,
+      )
+    );
+    // Place overrides here
+
+  } // end .light-theme
+}

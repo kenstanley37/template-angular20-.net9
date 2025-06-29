@@ -9,6 +9,7 @@ import { AuthService } from '../../../_services/auth-service';
 import { Profile } from '../../../_pages/user/profile/profile';
 import { ProfileDto } from '../../../_models/user-model';
 import { UserService } from '../../../_services/user-service';
+import { ThemeService } from '../../../_services/theme-service';
 
 @Component({
   selector: 'app-toolbar',
@@ -30,6 +31,7 @@ export class Toolbar implements OnInit {
 
   private authService = inject(AuthService);
   private userService = inject(UserService);
+  private themeService = inject(ThemeService);
   private router = inject(Router);
 
   // Use Signal for reactive state management
@@ -48,6 +50,12 @@ export class Toolbar implements OnInit {
     if (storedSidenavState) {
       this.isSidenavOpen.set(JSON.parse(storedSidenavState));
     }
+  }
+
+  toggleTheme()
+  {
+    console.log("Theme Toggled");
+    this.themeService.toggleTheme();
   }
 
   onScroll(event: Event) {

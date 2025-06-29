@@ -1,0 +1,41 @@
+<div class="controls">
+  <mat-form-field appearance="outline">
+    <mat-label>Number of Images</mat-label>
+    <input
+      matInput
+      type="number"
+      min="1"
+      max="100"
+      [ngModel]="totalImages()"
+      (ngModelChange)="updateTotalImages($event)"
+    />
+  </mat-form-field>
+</div>
+
+<div class="pagination-controls">
+  <button
+    mat-raised-button
+    (click)="prevPage()"
+    [disabled]="currentPage() === 1"
+  >
+    Previous
+  </button>
+  <span>Page {{ currentPage() }} / {{ totalPages() }}</span>
+  <button
+    mat-raised-button
+    (click)="nextPage()"
+    [disabled]="currentPage() === totalPages()"
+  >
+    Next
+  </button>
+</div>
+
+<div class="image-grid">
+  <mat-card
+    *ngFor="let img of paginatedImages()"
+    class="image-card"
+    (click)="openFullscreen(img)"
+  >
+    <img mat-card-image [src]="img" alt="Random" loading="lazy" />
+  </mat-card>
+</div>

@@ -1,4 +1,5 @@
 using api.Data;
+using api.Repositories;
 using api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -31,8 +32,9 @@ namespace api
 
             // Token service for JWT and refresh token management
             builder.Services.AddScoped<iTokenService, TokenService>();
-
             builder.Services.AddHttpClient<TokenService>();
+            // Register repository
+            builder.Services.AddScoped<IImageRepository, ImageRepository>();
 
             // JWT Authentication configuration
             var jwtKey = builder.Configuration["Jwt:Key"]

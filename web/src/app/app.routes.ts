@@ -7,6 +7,7 @@ import { Profile } from './_pages/user/profile/profile';
 import { Home } from './_pages/home/home';
 import { loginGuard } from './_guards/login-guard';
 import { NotFound } from './_pages/not-found/not-found';
+import { Images } from './_pages/images/images';
 
 export const routes: Routes = [
     { path: '', component: Home },
@@ -15,6 +16,7 @@ export const routes: Routes = [
     { path: 'offline', component: SiteOffline },
     { path: 'verify-email', component: VerifyEmail },
     { path: 'profile', component: Profile },
+    { path: 'images', component: Images },
     { path: '**', component: NotFound }
 ];
 // Note: The '**' wildcard route should be the last route in the array to catch all unmatched paths.

@@ -2,9 +2,10 @@
   <button mat-icon-button (click)="toggleSidenav()">
     <mat-icon>{{ pinned ? 'chevron_left' : 'menu' }}</mat-icon>
   </button>
-  <span routerLink="/">Auth App</span>
+  <span routerLink="/">Template App</span>
 
   <button routerLink="/" mat-button>Home</button>
+  <button routerLink="/images" mat-button>Images</button>
   <span class="spacer"></span>
 
   @if (isAuthenticated() && profile()) {
@@ -21,6 +22,9 @@
       <button mat-menu-item routerLink="/profile">Profile</button>
       <button mat-menu-item (click)="logout()">Logout</button>
     </mat-menu>
+    <button mat-icon-button (click)="toggleTheme()">
+      <mat-icon aria-hidden="false" aria-label="Example home icon" fontIcon="format_color_fill"></mat-icon>
+    </button>
   </div>
   } @else {
   <button mat-button routerLink="/login">Login</button>

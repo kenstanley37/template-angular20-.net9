@@ -23,5 +23,20 @@ namespace api.Data
         /// </summary>
         public DbSet<RefreshToken> RefreshTokens { get; set; }
         public DbSet<LoginAttempt> LoginAttempts { get; set; }
+        public DbSet<Image> Images { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Image>()
+            .HasKey(i => i.Id);
+
+            modelBuilder.Entity<Image>()
+                .Property(i => i.Data)
+                .HasColumnType("varbinary(max)");
+
+            modelBuilder.Entity<Image>()
+                .Property(i => i.Category)
+                .HasMaxLength(50); // Limit category length
+        }
     }
 }

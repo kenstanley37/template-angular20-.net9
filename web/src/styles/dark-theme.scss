@@ -1,0 +1,20 @@
+@use "@angular/material" as mat;
+
+html {
+  .dark-theme {
+    color-scheme: dark;
+    @include mat.theme(
+      (
+        color: (
+          primary: mat.$blue-palette,
+          tertiary: mat.$green-palette,
+        ),
+        density: 0,
+        typography: Roboto,
+        dark: true,
+      )
+    );
+    // Place overrides here
+    
+  } // end .dark-theme
+}

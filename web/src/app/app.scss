@@ -1,5 +1,12 @@
+.wrapper {
+  position: relative;
+  top: 64px;
+  border: black 1 1;
+}
+
 .sidenav-container {
-  height: 100vh;
+  //
+  height: calc(100vh - 128px);
   display: flex;
   flex-direction: row;
 }
@@ -9,7 +16,6 @@ mat-sidenav.sidenav {
   transition: width 0.25s ease;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
   overflow-x: hidden;
-  top: 64px;
 
   &.collapsed {
     width: 64px;
@@ -22,10 +28,9 @@ mat-sidenav-content.main-content {
   height: 100vh;
   width: 100%;
   transition: margin-left 0.25s ease;
-  top: 64px;
 
   &.with-sidenav {
-    margin-left: 220px !important
+    margin-left: 220px !important;
   }
 
   &.collapsed {
