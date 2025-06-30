@@ -1,16 +1,17 @@
 .unauthorized-container {
-  height: 100vh;
+  height: calc(100vh - 128px);
   display: flex;
+  position: relative;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #ff6b6b, #f06595);
+  //background: linear-gradient(135deg, #ff6b6b, #f06595);
   color: white;
   text-align: center;
   font-family: 'Segoe UI', sans-serif;
 }
 
 .content {
-  background-color: rgba(0, 0, 0, 0.25);
+  background-color: rgba(0, 0, 0, 0.45);
   padding: 2rem 3rem;
   border-radius: 1.5rem;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);

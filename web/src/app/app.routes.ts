@@ -9,6 +9,8 @@ import { loginGuard } from './_guards/login-guard';
 import { NotFound } from './_pages/not-found/not-found';
 import { Images } from './_pages/images/images';
 import { authGuard } from './_guards/auth-guard';
+import { AdminDashboard } from './_pages/admin/admin-dashboard/admin-dashboard';
+import { adminGuard } from './_guards/admin-guard';
 
 
 export const routes: Routes = [
@@ -30,6 +32,11 @@ export const routes: Routes = [
     {
         path: 'unauthorized',
         loadComponent: () => import('./_components/unauthorized/unauthorized').then(m => m.Unauthorized)
+    },
+    { 
+        path: 'admindashboard', 
+        canActivate: [adminGuard],
+        component: AdminDashboard
     },
 
     { path: 'images', component: Images },

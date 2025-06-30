@@ -27,6 +27,7 @@ export class AuthService {
   public isAuthenticated = this.isAuthenticatedSignal.asReadonly();
 
   constructor() {
+    /* Circle DI error
     this.refreshToken().subscribe({
       next: () => this.isAuthenticatedSignal.set(true),
       error: () => {
@@ -36,6 +37,7 @@ export class AuthService {
         });
       }
     });
+    */
   }
 
   getIsAuthenticated(): Observable<boolean> {
