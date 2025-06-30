@@ -1,4 +1,4 @@
-import { Component, effect, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, effect, inject, OnInit, signal } from '@angular/core';
 import { ProfileDto, UpdateProfilePictureDto } from '../../../_models/user-model';
 import { AuthService } from '../../../_services/auth-service';
 import { Router } from '@angular/router';
@@ -13,7 +13,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { SkeletonCard } from "../../../_components/skeleton-card/skeleton-card";
 import { ConfirmService } from '../../../_services/confirm-service';
 import { UserService } from '../../../_services/user-service';
-
+import { SafeUrlService } from '../../../_services/shared/safe-url-service';
 
 @Component({
   selector: 'app-profile',
@@ -25,8 +25,13 @@ export class Profile implements OnInit {
 
   private confirmService = inject(ConfirmService);
   private userService = inject(UserService);
+  private safeUrlService = inject(SafeUrlService);
 
   profile = this.userService.userProfile; // Use signal for reactive state
+
+  safeProfilePic = computed(() =>
+    this.safeUrlService.sanitizeImageUrl(this.profile()!.profilePicture)
+  );
 
   isLoading = signal<boolean>(true);
   errorMessage = signal<string | undefined>(undefined);

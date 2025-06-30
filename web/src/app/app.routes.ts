@@ -8,6 +8,8 @@ import { Home } from './_pages/home/home';
 import { loginGuard } from './_guards/login-guard';
 import { NotFound } from './_pages/not-found/not-found';
 import { Images } from './_pages/images/images';
+import { authGuard } from './_guards/auth-guard';
+
 
 export const routes: Routes = [
     { path: '', component: Home },
@@ -15,7 +17,21 @@ export const routes: Routes = [
     { path: 'register', component: Register },
     { path: 'offline', component: SiteOffline },
     { path: 'verify-email', component: VerifyEmail },
-    { path: 'profile', component: Profile },
+    {
+        path: 'dashboard',
+        canActivate: [authGuard],
+        loadComponent: () => import('./_pages/user/dashboard/dashboard').then(p => p.Dashboard)
+    },
+    {
+        path: 'profile',
+        canActivate: [authGuard],
+        loadComponent: () => import('./_pages/user/profile/profile').then(p => p.Profile)
+    },
+    {
+        path: 'unauthorized',
+        loadComponent: () => import('./_components/unauthorized/unauthorized').then(m => m.Unauthorized)
+    },
+
     { path: 'images', component: Images },
     { path: '**', component: NotFound }
 ];

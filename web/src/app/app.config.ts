@@ -6,8 +6,6 @@ import { routes } from './app.routes';
 import { firstValueFrom } from 'rxjs';
 import { ConfigService } from './_services/config-service';
 import { authInterceptor } from './_interceptors/auth-interceptor';
-import { AuthService } from './_services/auth-service';
-import { UserService } from './_services/user-service';
 // This file configures the Angular application with necessary providers and initializers.
 // It sets up routing, animations, HTTP client, and social authentication services.
 

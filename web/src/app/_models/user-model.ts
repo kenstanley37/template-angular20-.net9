@@ -29,8 +29,8 @@ export interface ProfileDto {
   email: string;
   address: string;
   phoneNumber: string;
-  profilePicture?: string | null; // Explicitly allow null
-  role: string;
+  profilePicture?: string; // Explicitly allow null
+  role: 'admin' | 'user' | 'moderator'; // etc
   bio: string;
 }
 

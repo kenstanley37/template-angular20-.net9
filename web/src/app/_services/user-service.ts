@@ -58,7 +58,7 @@ export class UserService {
       tap(message => {
         const currentProfile = this.userProfile();
         if (currentProfile) {
-          this.userProfileSignal.set({ ...currentProfile, profilePicture: dto.profilePicture || null });
+          this.userProfileSignal.set({ ...currentProfile, profilePicture: dto.profilePicture  });
         }
       }),
       catchError(this.handleError)

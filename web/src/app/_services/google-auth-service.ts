@@ -21,9 +21,8 @@ declare const google: any;
 })
 export class GoogleAuthService {
   private client: any;
-  private userService = inject(UserService);
+  //private userService = inject(UserService);
   private configService = inject(ConfigService);
-  private httpClient = inject(HttpClient);
   private authService = inject(AuthService);
   private router = inject(Router);
 
@@ -50,9 +49,10 @@ export class GoogleAuthService {
 
   private handleCredentialResponse(response: any) {
     console.log('Credential:', response.credential);
+    
     this.authService.googleLogin(response.credential).pipe(
       map((profile: ProfileDto) => {
-        this.userService.setProfile(profile);
+        //this.userService.setProfile(profile);
         this.authService.setIsAuthenticated(true);
         this.router.navigate(['/profile']);
         
@@ -63,6 +63,7 @@ export class GoogleAuthService {
         return of(null);
       })
     ).subscribe();
+    
   }
 
   public promptSignIn() {
