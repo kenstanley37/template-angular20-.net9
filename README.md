@@ -175,8 +175,5 @@ Contributions are welcome! Please:
 
 ## License
 
-MIT License © [Your Name or Organization]
+MIT License © Ken Stanley
 
----
-
-If you want, I can also help generate sample code snippets for authentication, social login integration, or Angular Material usage — just ask!
