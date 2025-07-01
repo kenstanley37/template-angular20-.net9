@@ -760,10 +760,14 @@ namespace api.Controllers
         [Authorize]
         public IActionResult CheckAuth()
         {
-            _logger.LogInformation("Authentication check successful for user: {Email}", User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value);
-            return Ok(ApiResponse<object>.Ok(new { isAuthenticated = true }, "Authentication check successful"));
+            var email = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+
+            return Ok(ApiResponse<object>.Ok(
+                new { isAuthenticated = true, email },
+                "Authentication check successful"
+            ));
         }
 
-        
+
     }
 }

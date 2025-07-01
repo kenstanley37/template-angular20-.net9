@@ -1,58 +1,52 @@
-<mat-nav-list>
-  <a
-    mat-list-item
-    class="menu-item"
-    routerLink=""
-    matTooltip="Home"
-    [matTooltipDisabled]="!collapsed"
-    #rla="routerLinkActive"
-    [activated]="rla.isActive"
-    routerLinkActive="selected-menu-item"
-    [routerLinkActiveOptions]="{ exact: true }"
-  >
-    <mat-icon> home </mat-icon>
-    <span class="label" [class.hidden]="collapsed">Home</span>
-  </a>
-
-  <a
-    mat-list-item
-    class="menu-item"
-    routerLink="/profile"
-    matTooltip="Profile"
-    [matTooltipDisabled]="!collapsed"
-    #rla="routerLinkActive"
-    [activated]="rla.isActive"
-    routerLinkActive="selected-menu-item"
-  >
-    <mat-icon>person</mat-icon>
-    <span class="label" [class.hidden]="collapsed">Profile</span>
-  </a>
-
-  <div class="tobottom">
+<mat-tree #tree [dataSource]="dataSource" [childrenAccessor]="childrenAccessor">
+  <!-- This is the tree node template for leaf nodes -->
+  <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding>
+    <!-- use a disabled button to provide padding for tree leaf -->
+    <button matIconButton disabled aria-label="Leaf node"></button>
     <a
       mat-list-item
       class="menu-item"
-      routerLink="/settings"
-      matTooltip="Settings"
+      [routerLink]="node.route"
+      [matTooltip]="node.name"
       [matTooltipDisabled]="!collapsed"
       #rla="routerLinkActive"
       [activated]="rla.isActive"
       routerLinkActive="selected-menu-item"
+      [routerLinkActiveOptions]="{ exact: true }"
     >
-      <mat-icon>settings</mat-icon>
-      <span class="label" [class.hidden]="collapsed">Settings</span>
+      <mat-icon>{{node.icon}}</mat-icon>
+      <span class="label" [class.hidden]="collapsed">{{node.name}}</span>
     </a>
+  </mat-tree-node>
+  <!-- This is the tree node template for expandable nodes -->
+  <mat-tree-node
+    *matTreeNodeDef="let node;when: hasChild"
+    matTreeNodePadding
+    matTreeNodeToggle
+    [cdkTreeNodeTypeaheadLabel]="node.name"
+  >
+    <button
+      matIconButton
+      matTreeNodeToggle
+      [attr.aria-label]="'Toggle ' + node.name"
+    >
+      <mat-icon class="mat-icon-rtl-mirror">
+        {{tree.isExpanded(node) ? 'expand_more' : 'chevron_right'}}
+      </mat-icon>
+    </button>
     <a
       mat-list-item
       class="menu-item"
-      routerLink="/settings"
-      matTooltip="Settings"
+      [routerLink]="node.route"
+      [matTooltip]="node.name"
       [matTooltipDisabled]="!collapsed"
       #rla="routerLinkActive"
       [activated]="rla.isActive"
       routerLinkActive="selected-menu-item"
+      [routerLinkActiveOptions]="{ exact: true }"
     >
-      <mat-icon>settings</mat-icon> Test
+      <mat-icon> {{node.icon}} </mat-icon>
+      <span class="label" [class.hidden]="collapsed">{{node.name}}</span>
     </a>
-  </div>
-</mat-nav-list>
+  </mat-tree-node>
+</mat-tree>

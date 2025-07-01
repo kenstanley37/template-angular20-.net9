@@ -1,16 +1,23 @@
 {
     "cSpell.words": [
         "abacritt",
+        "admindashboard",
         "adsbygoogle",
+        "analogjs",
         "angularx",
+        "Apexcharts",
         "apqma",
         "googleusercontent",
         "otabj",
         "sjhuf",
         "toastr",
-        "tobottom"
+        "tobottom",
+        "xaxis",
+        "zoomin",
+        "zoomout"
     ],
     "vscodeGrok.apiKey": "xai-UXIBTkgUGf1kqUroAwBaPEkZiwEaJIysHDgnbwUGZ4BblPEInFqHDKhA0e5x6cAliDxdKFbF3uYQC7u6",
     "vscodeGrok.model": "grok-3",
     "vscodeGrok.showPreview": "always",
+    "compile-hero.disable-compile-files-on-did-save-code": false,
 }

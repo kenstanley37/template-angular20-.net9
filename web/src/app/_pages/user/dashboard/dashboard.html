@@ -1,1 +1,32 @@
-<p>dashboard works!</p>
+<!-- Sales chart with ngx-charts -->
+<ngx-charts-bar-vertical
+  [results]="salesData()"
+  [xAxis]="showXAxis"
+  [yAxis]="showYAxis"
+  [legend]="showLegend"
+  [showXAxisLabel]="showXAxisLabel"
+  [showYAxisLabel]="showYAxisLabel"
+  [xAxisLabel]="salesXAxisLabel"
+  [yAxisLabel]="salesYAxisLabel"
+  [view]="view">
+</ngx-charts-bar-vertical>
+
+<!-- Revenue chart with filtered data -->
+<ngx-charts-line-chart
+  [results]="filteredRevenue()"
+  [xAxis]="showXAxis"
+  [yAxis]="showYAxis"
+  [legend]="showLegend"
+  [showXAxisLabel]="showXAxisLabel"
+  [showYAxisLabel]="showYAxisLabel"
+  [xAxisLabel]="revenueXAxisLabel"
+  [yAxisLabel]="revenueYAxisLabel"
+  [view]="view">
+</ngx-charts-line-chart>
+
+<!-- Range slider for filtering revenue by date -->
+<ngx-slider
+  [(value)]="valueProp"
+  [(highValue)]="highValueProp"
+  [options]="sliderOptions">
+</ngx-slider>

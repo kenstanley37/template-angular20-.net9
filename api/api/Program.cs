@@ -75,6 +75,7 @@ namespace api
                     };
                 });
 
+
             // Configure CORS to allow requests from frontend
             var frontEndUrl = builder.Configuration["Frontend:Url"]!;
             builder.Services.AddCors(options =>

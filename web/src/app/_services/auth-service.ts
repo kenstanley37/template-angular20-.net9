@@ -11,6 +11,12 @@ import {
 import { environment } from '../../environments/environment';
 import { DeviceIdService } from './device-id-service';
 import { Router } from '@angular/router';
+import { UserService } from './user-service';
+
+interface AuthCheckResponse {
+  isAuthenticated: boolean;
+  email: string;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -19,7 +25,7 @@ export class AuthService {
   private http = inject(HttpClient);
   private deviceIdService = inject(DeviceIdService);
   private router = inject(Router);
-  //private userService = inject(UserService);
+  private userService = inject(UserService);
 
   private baseUrl = `${environment.apiUrl}`;
 
@@ -139,18 +145,27 @@ export class AuthService {
   }
 
   checkAuthStatus(): Observable<boolean> {
-    return this.http.get<ApiResponse<{ isAuthenticated: boolean }>>(`${this.baseUrl}/auth/check`, { withCredentials: true }).pipe(
-      map(response => this.handleResponse(response).isAuthenticated),
-      tap(isAuthenticated => this.isAuthenticatedSignal.set(isAuthenticated)),
-      catchError(() => {
-        this.isAuthenticatedSignal.set(false);
-        return of(false);
+    return this.http
+      .get<ApiResponse<AuthCheckResponse>>(`${this.baseUrl}/auth/check`, {
+        withCredentials: true
       })
-    );
+      .pipe(
+        map(res => this.handleResponse(res)),
+        tap(({ isAuthenticated, email }) => {
+          this.isAuthenticatedSignal.set(isAuthenticated);
+          this.userService.getProfile(); // if you track user info
+        }),
+        map(res => res.isAuthenticated),
+        catchError(() => {
+          this.isAuthenticatedSignal.set(false);
+          return of(false);
+        })
+      );
   }
 
   private handleResponse<T>(response: ApiResponse<T>): T {
     if (!response.success) {
+      console.error('API Error:', response);
       throw new Error(response.message || 'API request failed');
     }
     return response.data as T;
