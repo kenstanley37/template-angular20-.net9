@@ -58,6 +58,7 @@ export class App implements OnInit {
     // Initialization logic can go here if needed
 
     effect(() => {
+      console.log('isAuth app: ', this.isAuthenticated());
       breakpointObserver.observe([Breakpoints.XSmall, Breakpoints.Small])
         .subscribe(result => {
           this.isMobile.set(result.matches);

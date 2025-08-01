@@ -1,16 +1,10 @@
-<mat-tree #tree [dataSource]="dataSource" [childrenAccessor]="childrenAccessor">
+<mat-tree #tree [dataSource]="dataSource" [childrenAccessor]="childrenAccessor" class="sideNavTree">
   <!-- This is the tree node template for leaf nodes -->
   <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding>
     <!-- use a disabled button to provide padding for tree leaf -->
-    <button matIconButton disabled aria-label="Leaf node"></button>
     <a
-      mat-list-item
-      class="menu-item"
       [routerLink]="node.route"
       [matTooltip]="node.name"
-      [matTooltipDisabled]="!collapsed"
-      #rla="routerLinkActive"
-      [activated]="rla.isActive"
       routerLinkActive="selected-menu-item"
       [routerLinkActiveOptions]="{ exact: true }"
     >
@@ -25,6 +19,15 @@
     matTreeNodeToggle
     [cdkTreeNodeTypeaheadLabel]="node.name"
   >
+    <a
+      [routerLink]="node.route"
+      [matTooltip]="node.name"
+      routerLinkActive="selected-menu-item"
+      [routerLinkActiveOptions]="{ exact: true }"
+    >
+      <mat-icon>{{node.icon}}</mat-icon>
+      <span class="label" [class.hidden]="collapsed">{{node.name}}</span>
+    </a>
     <button
       matIconButton
       matTreeNodeToggle
@@ -34,19 +37,5 @@
         {{tree.isExpanded(node) ? 'expand_more' : 'chevron_right'}}
       </mat-icon>
     </button>
-    <a
-      mat-list-item
-      class="menu-item"
-      [routerLink]="node.route"
-      [matTooltip]="node.name"
-      [matTooltipDisabled]="!collapsed"
-      #rla="routerLinkActive"
-      [activated]="rla.isActive"
-      routerLinkActive="selected-menu-item"
-      [routerLinkActiveOptions]="{ exact: true }"
-    >
-      <mat-icon> {{node.icon}} </mat-icon>
-      <span class="label" [class.hidden]="collapsed">{{node.name}}</span>
-    </a>
   </mat-tree-node>
 </mat-tree>

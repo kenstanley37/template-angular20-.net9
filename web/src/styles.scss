@@ -2,6 +2,8 @@
 @use './styles/dark-theme.scss';
 @use './styles/light-theme.scss';
 
+@use "tailwindcss";
+
 
 html, body {
   height: 100%;

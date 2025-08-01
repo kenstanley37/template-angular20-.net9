@@ -1,60 +1,23 @@
-::ng-deep .mat-tree-node {
-  padding-left: 12px !important;
-}
+@use "@angular/material" as mat;
 
-:host {
-  display: block;
-  height: 100%;
-  overflow: hidden;
+// Customize the entire app. Change :root to your selector if you want to scope the styles.
+.sideNavTree {
 
-  .mat-tree {
-    background-color: transparent !important;
-    padding-top: 0.5rem;
-    width: 100%;
-  }
-
-  .menu-item {
-    display: flex;
-    align-items: center;
-    height: 3rem;
-    padding: 0 1rem;
-    border-radius: 0.5rem;
-    margin: 0.25rem 0;
-    text-decoration: none;
-    color: inherit;
-    font-weight: 500;
-
-    mat-icon {
-      margin-right: 1rem;
-      font-size: 1.5rem;
-    }
-
-    .label {
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      transition: width 0.2s ease, opacity 0.2s ease;
-    }
-
-    .label.hidden {
-      opacity: 0;
-      width: 0;
-      overflow: hidden;
-    }
-  }
+  padding: 20px;
 
   .selected-menu-item {
-    font-weight: 600;
-    text-decoration: underline;
+    background-color: rgb(197, 195, 195);
   }
 
-  .mat-tree-node {
-    padding-left: 0.5rem;
-    display: flex;
-    align-items: center;
+  @include mat.tree-overrides(
+    (
+      container-background-color: transparent,
+      node-text-color: red,
+      node-text-size: 16px,
+      node-min-height: 1px,
+    )
+  );
 
-    button[mat-icon-button] {
-      margin-right: 0.25rem;
-    }
-  }
 }
+
+

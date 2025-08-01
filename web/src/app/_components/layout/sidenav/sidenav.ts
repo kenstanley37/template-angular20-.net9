@@ -1,12 +1,14 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, inject, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
 import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip'; // ✅ Add this
-import { MatTreeModule } from '@angular/material/tree';
+import { MatTreeFlattener, MatTreeModule } from '@angular/material/tree';
 import { MatButtonModule } from '@angular/material/button';
 import { trigger, state, style, transition, animate } from '@angular/animations';
+import { AuthService } from '../../../_services/auth-service';
+import { FlatTreeControl } from '@angular/cdk/tree';
 
 
 /**
@@ -22,9 +24,9 @@ interface SideNavLinks {
   name: string;
   route: string;
   icon: string;
+  active: boolean;
   children?: SideNavLinks[]
 }
-
 
 
 @Component({
@@ -42,9 +44,11 @@ interface SideNavLinks {
 })
 export class Sidenav implements OnChanges {
 
-  //@Input({ required: true }) open!: boolean;
+  private auth = inject(AuthService);
+
   @Input() collapsed = false;
 
+  isAuthenticated = this.auth.isAuthenticated;
 
   ngOnChanges(changes: SimpleChanges): void {
 
@@ -55,6 +59,7 @@ export class Sidenav implements OnChanges {
   childrenAccessor = (node: SideNavLinks) => node.children ?? [];
 
   hasChild = (_: number, node: SideNavLinks) => !!node.children && node.children.length > 0;
+
 }
 
 const NavLinks_Data: SideNavLinks[] = [
@@ -62,10 +67,15 @@ const NavLinks_Data: SideNavLinks[] = [
     name: 'Home',
     icon: 'home',
     route: '/home',
-    children: [{
-      name: 'Profile',
-      icon: 'profile',
-      route: '/profile'
-    }]
+    active: true,
+
+    children: [
+      {
+        name: 'Profile',
+        icon: 'profile',
+        route: '/profile',
+        active: false // Set a default value; update dynamically in the component if needed
+      }
+    ]
   }
 ]
