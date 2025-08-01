@@ -1,146 +1,79 @@
-# =============================
-# Global Ignored Directories
-# =============================
+# Global Ignored Files & Directories
 node_modules/
 dist/
 build/
 coverage/
-*.log
 tmp/
 temp/
-
-# =============================
-# Angular Frontend (web/)
-# =============================
-
-web/node_modules/
-web/dist/
-web/.angular/
-web/.output/
-web/coverage/
-web/.eslintcache
-web/*.zip
-
-# Angular environment files (ignore real ones, keep example)
-web/src/environments/environment*.ts
-!web/src/environments/environment.example.ts
-
-# Angular cache
-web/.angular/cache/
-web/.sass-cache/
-web/.vscode/*
-!web/.vscode/settings.json
-!web/.vscode/tasks.json
-!web/.vscode/launch.json
-!web/.vscode/extensions.json
-web/.history/
-
-# =============================
-# .NET 9 Backend (api/api/)
-# =============================
-
-# Build results
-api/api/bin/
-api/api/obj/
-api/api/Debug/
-api/api/Release/
-api/api/.vs/
-api/api/.vscode/
-api/api/.idea/
-api/api/.history/
-api/api/*.zip
-
-# Rider / ReSharper
-api/api/*.sln.iml
-api/api/_ReSharper*/
-api/api/*.DotSettings.user
-
-# User-specific files
-api/api/*.user
-api/api/*.suo
-api/api/*.userosscache
-api/api/*.sln.docstates
-
-# Logs & temp
-api/api/*.log
-api/api/*.tmp
-api/api/*.tlog
-api/api/*.bak
-
-# Build cache
-api/api/*.dbmdl
-api/api/*.pdb
-api/api/*.cache
-api/api/*.db
-api/api/Logs/
-
-# .NET generated files
-api/api/Generated\ Files/
-api/api/Migrations/
-
-# ASP.NET config/secrets
-api/api/Properties/launchSettings.json
-api/api/appsettings.Development.json
-api/api/appsettings.Production.json
-api/api/appsettings.Local.json
-api/api/appsettings.json
-api/api/secrets.json
-!api/api/appsettings.example.json
-
-# Publish profiles
-api/api/*.publishsettings
-api/api/*.pubxml
-api/api/PublishScripts/
-
-# NuGet
-api/api/packages/
-api/api/*.nupkg
-api/api/*.snupkg
-api/api/*.nuget.props
-api/api/*.nuget.targets
-
-# Azure & cloud
-api/api/.azure/
-api/api/*.azurePubxml
-
-# Others
-api/api/.temp/
-api/api/.cache/
-api/api/.vsconfig
-api/api/.DS_Store
-api/api/Thumbs.db
-
-# Optional SQL files
-api/api/*.mdf
-api/api/*.ldf
-api/api/*.ndf
-
-**/.vs/
-
-# =============================
-# System & Editor Files (global)
-# =============================
-.DS_Store
-Thumbs.db
-*.swp
-*.swo
+*.log
+*.zip
 *.bak
 *.tmp
-*.log
-
-# VS Code workspace files (global)
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+~$*
+*~
+.history/
 *.code-workspace
-
-# IDE project/workspace configs
 *.iml
 *.ipr
 *.iws
 
-# Ignore local history for VS Code
-.history/
+# Angular Frontend
+.angular/
+.output/
+.eslintcache
+.sass-cache/
+src/environments/environment*.ts
+!src/environments/environment.example.ts
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
 
-# =============================
-# Backup files
-# =============================
-~$*
-*~
+# .NET Backend
+bin/
+obj/
+Debug/
+Release/
+.vs/
+.vscode/
+.idea/
+*.sln.iml
+_ReSharper*/
+*.DotSettings.user
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.tlog
+*.dbmdl
+*.pdb
+*.cache
+*.db
+Logs/
+Generated Files/
+Migrations/
+Properties/launchSettings.json
+appsettings*.json
+secrets.json
+!appsettings.example.json
+*.publishsettings
+*.pubxml
+PublishScripts/
+packages/
+*.nupkg
+*.snupkg
+*.nuget.props
+*.nuget.targets
+.azure/
+*.azurePubxml
+.temp/
+.cache/
+.vsconfig
+*.mdf
+*.ldf
+*.ndf
